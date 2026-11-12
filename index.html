@@ -29,20 +29,18 @@
       <input id="busca" type="search" placeholder="Buscar por nome, código, lote ou cor" autocomplete="off" enterkeyhint="search">
     </label>
     <div class="chips" id="chips" role="group" aria-label="Tipo de pedra"></div>
-    <div class="filtros">
-      <select id="f-acabamento" aria-label="Acabamento"><option value="">Todos os acabamentos</option></select>
-      <select id="f-cor" aria-label="Cor"><option value="">Todas as cores</option></select>
-      <select id="f-status" aria-label="Disponibilidade">
-        <option value="">Toda disponibilidade</option>
-        <option value="ativos" selected>Ocultar esgotados</option>
-        <option value="disponivel">Só disponíveis</option>
-      </select>
+    <div class="barra-filtros">
+      <button class="btn-filtros" type="button" id="b-filtros" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+        Filtros <span class="num" id="n-filtros" hidden></span></button>
       <select id="f-ordem" aria-label="Ordenar">
-        <option value="nome">Ordem: nome</option>
-        <option value="recentes">Ordem: mais recentes</option>
-        <option value="menor">Ordem: menor preço</option>
-        <option value="maior">Ordem: maior preço</option>
+        <option value="nome">Ordem: nome A–Z</option>
+        <option value="recentes">Mais recentes</option>
+        <option value="menor">Menor preço</option>
+        <option value="maior">Maior preço</option>
+        <option value="estoque">Maior estoque (m²)</option>
       </select>
+      <button class="limpar-filtros" type="button" id="b-limpar-topo" hidden>Limpar</button>
     </div>
   </div>
 </header>
@@ -68,7 +66,8 @@
   const $ = (id) => document.getElementById(id);
   C.avisoDemo();
 
-  let cliente, produtos = [], config = {}, tipoAtivo = '';
+  let cliente, produtos = [], config = {};
+  const filtros = C.Filtros({ modo: 'publico', botao: $('b-filtros'), aoMudar: () => { sincronizarChips(); desenhar(); } });
 
   async function carregar() {
     try {
@@ -79,10 +78,7 @@
       ]);
       if (rp.error) throw rp.error;
       config = rc.data || {};
-      produtos = (rp.data || []).map((p) => Object.assign(p, {
-        _fotos: C.normalizarFotos(p.fotos),
-        _busca: C.semAcento([p.nome, p.codigo, p.lote, p.cor, p.tipo, p.origem, p.acabamento].join(' '))
-      }));
+      produtos = (rp.data || []).map((p) => Object.assign(p, { _fotos: C.normalizarFotos(p.fotos) }));
       if (config.nome_empresa && config.nome_empresa !== 'Catálogo de Mármores') { $('empresa').textContent = config.nome_empresa; document.title = config.nome_empresa + ' · Catálogo'; }
       montarFiltros();
       desenhar();
@@ -94,44 +90,25 @@
   }
 
   function montarFiltros() {
+    filtros.definirProdutos(produtos);
     const tipos = [...new Set(produtos.map((p) => p.tipo).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
     $('chips').innerHTML = ['', ...tipos].map((t) =>
-      `<button class="chip" type="button" data-tipo="${C.esc(t)}" aria-pressed="${t === tipoAtivo}">${t ? C.esc(t) : 'Todos'}</button>`).join('');
+      `<button class="chip" type="button" data-tipo="${C.esc(t)}" aria-pressed="false">${t ? C.esc(t) : 'Todos'}</button>`).join('');
     $('chips').hidden = tipos.length < 2;
-    const preencher = (sel, valores) => {
-      const atual = sel.value; const primeiro = sel.options[0].outerHTML;
-      sel.innerHTML = primeiro + valores.map((v) => `<option>${C.esc(v)}</option>`).join('');
-      sel.value = valores.includes(atual) ? atual : '';
-      sel.hidden = valores.length < 2;
-    };
-    const uniq = (campo) => [...new Set(produtos.map((p) => p[campo]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    preencher($('f-acabamento'), uniq('acabamento'));
-    preencher($('f-cor'), uniq('cor'));
-    const temPreco = produtos.some((p) => p.preco_m2 != null);
+    sincronizarChips();
+    const temPreco = filtros.temPreco();
     [...$('f-ordem').options].forEach((o) => { if (o.value === 'menor' || o.value === 'maior') o.hidden = !temPreco; });
     if (!temPreco && /menor|maior/.test($('f-ordem').value)) $('f-ordem').value = 'nome';
   }
-
-  function filtrados() {
-    const termos = C.semAcento($('busca').value).split(/\s+/).filter(Boolean);
-    const ac = $('f-acabamento').value, cor = $('f-cor').value, st = $('f-status').value, ordem = $('f-ordem').value;
-    const lista = produtos.filter((p) =>
-      (!tipoAtivo || p.tipo === tipoAtivo) && (!ac || p.acabamento === ac) && (!cor || p.cor === cor) &&
-      (!st || (st === 'ativos' ? p.status !== 'esgotado' : p.status === st)) &&
-      termos.every((t) => p._busca.includes(t)));
-    const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
-    const preco = (p) => (p.preco_m2 == null ? null : Number(p.preco_m2));
-    lista.sort((a, b) => {
-      if (ordem === 'recentes') return String(b.atualizado_em).localeCompare(String(a.atualizado_em));
-      if (ordem === 'menor' || ordem === 'maior') {
-        const x = preco(a), y = preco(b);
-        if (x == null && y == null) return porNome(a, b); if (x == null) return 1; if (y == null) return -1;
-        return ordem === 'menor' ? x - y : y - x;
-      }
-      return porNome(a, b);
-    });
-    return lista;
+  function sincronizarChips() {
+    const t = filtros.estado.tipo;
+    [...$('chips').children].forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.tipo === t)));
+    const n = filtros.quantidadeAtivos();
+    $('n-filtros').hidden = !n; $('n-filtros').textContent = n;
+    $('b-limpar-topo').hidden = !n && !filtros.estado.busca;
   }
+
+  const filtrados = () => filtros.aplicar(produtos, $('f-ordem').value);
 
   function linhaPreco(p, grande) {
     if (p.preco_m2 == null) return grande ? '<p class="sub">Valor sob consulta</p>' : '<span class="preco"><small>Sob consulta</small></span>';
@@ -153,11 +130,13 @@
       return;
     }
     $('grade').innerHTML = lista.map((p) => {
-      const f = p._fotos[0];
+      const f = p._fotos.find((m) => m.p) || p._fotos[0];
+      const nVideos = p._fotos.filter((m) => m.tipo === 'video').length;
       const meta = [p.codigo, p.lote ? 'Lote ' + p.lote : '', p.espessura_cm ? C.fmtNum(p.espessura_cm) + ' cm' : ''].filter(Boolean).join(' · ');
       return `<button class="card ${p.status === 'esgotado' ? 'esgotado' : ''}" type="button" data-id="${C.esc(p.id)}">
-        <div class="foto">${f ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="${C.esc(p.nome)}" loading="lazy">` : '<div class="sem-foto">Sem foto</div>'}
-          ${p.status !== 'disponivel' ? C.badgeStatus(p.status) : ''}</div>
+        <div class="foto">${f && f.p ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="${C.esc(p.nome)}" loading="lazy">` : `<div class="sem-foto">${f ? 'Vídeo' : 'Sem foto'}</div>`}
+          ${p.status !== 'disponivel' ? C.badgeStatus(p.status) : ''}
+          ${nVideos ? `<span class="selo-video"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${nVideos > 1 ? nVideos + ' vídeos' : 'Vídeo'}</span>` : ''}</div>
         <div class="info"><span class="nome">${C.esc(p.nome)}</span>
           <span class="meta">${C.esc(meta)}</span>
           <span class="meta">${C.esc([p.tipo, p.acabamento].filter(Boolean).join(' · '))}</span>
@@ -166,10 +145,8 @@
   }
 
   function limparFiltros() {
-    $('busca').value = ''; tipoAtivo = '';
-    ['f-acabamento', 'f-cor'].forEach((id) => ($(id).value = ''));
-    $('f-status').value = '';
-    montarFiltros(); desenhar();
+    $('busca').value = ''; filtros.limpar(); filtros.definir({ status: '' });
+    sincronizarChips(); desenhar();
   }
 
   /* ---------- detalhe ---------- */
@@ -229,14 +206,18 @@
     const fs = atual._fotos;
     const g = $('galeria');
     if (!fs.length) { g.innerHTML = '<div class="sem-foto" style="color:#bbb">Sem foto</div>'; $('minis').hidden = true; $('salvar').hidden = true; return; }
+    const m = fs[fotoIdx], ehVideo = m.tipo === 'video';
     const icone = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>';
     $('salvar').hidden = false;
-    $('salvar').innerHTML = `<button class="botao primario" type="button" data-salvar="uma">${icone}Salvar esta foto</button>` +
+    $('salvar').innerHTML = `<button class="botao primario" type="button" data-salvar="uma">${icone}${ehVideo ? 'Salvar este vídeo' : 'Salvar esta foto'}</button>` +
       (fs.length > 1 ? `<button class="botao" type="button" data-salvar="todas">${icone}Todas (${fs.length})</button>` : '');
-    g.innerHTML = `<img src="${C.esc(C.urlFoto(cliente, fs[fotoIdx].g))}" alt="${C.esc(atual.nome)} — foto ${fotoIdx + 1}">` +
-      (fs.length > 1 ? `<button class="seta esq" type="button" aria-label="Foto anterior">‹</button><button class="seta dir" type="button" aria-label="Próxima foto">›</button><span class="pos">${fotoIdx + 1}/${fs.length}</span>` : '');
+    const setas = fs.length > 1 ? `<button class="seta esq" type="button" aria-label="Anterior">‹</button><button class="seta dir" type="button" aria-label="Próxima">›</button><span class="pos">${fotoIdx + 1}/${fs.length}</span>` : '';
+    g.innerHTML = (ehVideo
+      ? `<video src="${C.esc(C.urlFoto(cliente, m.v))}" ${m.p ? `poster="${C.esc(C.urlFoto(cliente, m.p))}"` : ''} controls playsinline preload="metadata" aria-label="${C.esc(atual.nome)} — vídeo"></video>`
+      : `<img src="${C.esc(C.urlFoto(cliente, m.g))}" alt="${C.esc(atual.nome)} — foto ${fotoIdx + 1}">`) + setas;
+    if (ehVideo) prebaixar(C.urlFoto(cliente, m.v)).catch(() => {});
     $('minis').hidden = fs.length < 2;
-    $('minis').innerHTML = fs.map((f, i) => `<button type="button" data-i="${i}" aria-current="${i === fotoIdx}" aria-label="Foto ${i + 1}"><img src="${C.esc(C.urlFoto(cliente, f.p))}" alt=""></button>`).join('');
+    $('minis').innerHTML = fs.map((f, i) => `<button type="button" data-i="${i}" aria-current="${i === fotoIdx}" aria-label="${f.tipo === 'video' ? 'Vídeo' : 'Foto'} ${i + 1}">${f.p ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="">` : '<span class="capa-vazia">vídeo</span>'}${f.tipo === 'video' ? '<span class="play" aria-hidden="true">▶</span>' : ''}</button>`).join('');
   }
   /* ---------- salvar fotos no celular ---------- */
   const baixadas = {};
@@ -247,9 +228,9 @@
     }
     return baixadas[url];
   }
-  function prepararFotos(p) { p._fotos.forEach((f) => prebaixar(C.urlFoto(cliente, f.g)).catch(() => {})); }
+  function prepararFotos(p) { p._fotos.forEach((f) => { if (f.tipo === 'foto') prebaixar(C.urlFoto(cliente, f.g)).catch(() => {}); }); }
   function nomeArquivo(p, i, tipo) {
-    const ext = /png/.test(tipo) ? 'png' : /svg/.test(tipo) ? 'svg' : /webp/.test(tipo) ? 'webp' : 'jpg';
+    const ext = /png/.test(tipo) ? 'png' : /svg/.test(tipo) ? 'svg' : /webp/.test(tipo) ? 'webp' : /quicktime/.test(tipo) ? 'mov' : /webm/.test(tipo) ? 'webm' : /video/.test(tipo) ? 'mp4' : 'jpg';
     const base = C.semAcento([p.nome, p.codigo, p.lote].filter(Boolean).join('-')).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     return `${base || 'pedra'}-${i + 1}.${ext}`;
   }
@@ -267,18 +248,19 @@
         const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       }
-      toast(files.length > 1 ? `${files.length} fotos baixadas` : 'Foto baixada');
+      toast(files.length > 1 ? `${files.length} arquivos baixados` : 'Arquivo baixado');
     } catch (e) {
       if (e && e.name === 'AbortError') return;
-      if (e && e.name === 'NotAllowedError') { toast('Fotos prontas. Toque de novo para salvar.'); return; }
+      if (e && e.name === 'NotAllowedError') { toast('Pronto! Toque de novo para salvar.'); return; }
       console.error(e); toast('Não consegui salvar. Segure o dedo sobre a foto e escolha “Salvar na Fotos”.', true);
     } finally { botao.disabled = false; botao.innerHTML = rotulo; }
   }
 
-  function mudarFoto(d) { const n = atual._fotos.length; if (n < 2) return; fotoIdx = (fotoIdx + d + n) % n; desenharFoto(); }
+  function mudarFoto(d) { const n = atual._fotos.length; if (n < 2) return; const v = $('galeria').querySelector('video'); if (v) v.pause(); fotoIdx = (fotoIdx + d + n) % n; desenharFoto(); }
 
   function fechar(voltar) {
     if ($('modal').hidden) return;
+    const v = $('galeria') && $('galeria').querySelector('video'); if (v) v.pause();
     $('modal').hidden = true; document.body.style.overflow = ''; atual = null;
     if (focoAntes && focoAntes.focus) focoAntes.focus();
     if (voltar && /#p=/.test(location.hash)) {
@@ -300,13 +282,13 @@
 
   /* ---------- eventos ---------- */
   let tBusca;
-  $('busca').addEventListener('input', () => { clearTimeout(tBusca); tBusca = setTimeout(desenhar, 120); });
-  ['f-acabamento', 'f-cor', 'f-status', 'f-ordem'].forEach((id) => $(id).addEventListener('change', desenhar));
+  $('busca').addEventListener('input', () => { clearTimeout(tBusca); tBusca = setTimeout(() => { filtros.definir({ busca: $('busca').value }); sincronizarChips(); desenhar(); }, 120); });
+  $('f-ordem').addEventListener('change', desenhar);
+  $('b-filtros').addEventListener('click', () => filtros.abrir());
+  $('b-limpar-topo').addEventListener('click', () => { $('busca').value = ''; filtros.limpar(); sincronizarChips(); desenhar(); });
   $('chips').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
-    tipoAtivo = b.dataset.tipo;
-    [...$('chips').children].forEach((c) => c.setAttribute('aria-pressed', c === b));
-    desenhar();
+    filtros.definir({ tipo: b.dataset.tipo }); sincronizarChips(); desenhar();
   });
   $('grade').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) abrir(c.dataset.id, true); });
   $('modal').addEventListener('click', (e) => {
@@ -318,13 +300,13 @@
     if (sb && atual) salvarFotos(sb.dataset.salvar === 'todas' ? atual._fotos.map((_, i) => i) : [fotoIdx], sb);
   });
   let x0 = null;
-  $('modal').addEventListener('touchstart', (e) => { if (e.target.closest('#galeria')) x0 = e.touches[0].clientX; }, { passive: true });
+  $('modal').addEventListener('touchstart', (e) => { if (e.target.closest('#galeria') && !e.target.closest('video')) x0 = e.touches[0].clientX; }, { passive: true });
   $('modal').addEventListener('touchend', (e) => {
     if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 40) mudarFoto(dx < 0 ? 1 : -1);
   });
   document.addEventListener('keydown', (e) => {
-    if ($('modal').hidden) return;
+    if ($('modal').hidden || e.target.closest('video')) return;
     if (e.key === 'Escape') fechar(true);
     else if (e.key === 'ArrowLeft') mudarFoto(-1);
     else if (e.key === 'ArrowRight') mudarFoto(1);

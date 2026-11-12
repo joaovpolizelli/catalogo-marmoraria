@@ -16,9 +16,20 @@
 <link rel="stylesheet" href="assets/estilo.css">
 <style>
   .painel { max-width: 760px; margin: 0 auto; padding: 16px 16px 120px; }
-  .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-  .cabeca h1 { font: 600 28px/1.1 var(--serif); margin: 0; }
-  .cabeca .sub { color: var(--texto-2); font-size: 13px; }
+  .topo-admin { position: sticky; top: 0; z-index: 25; background: var(--marca-fundo); color: var(--marca-texto); border-bottom: 3px solid var(--acento); }
+  .topo-admin .interno { max-width: 760px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  .topo-admin .logo { height: 36px; width: auto; flex: 0 0 auto; }
+  .topo-admin .titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topo-admin .titulo b { font: 600 20px/1.05 var(--serif); letter-spacing: .5px; color: var(--acento); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topo-admin .titulo small { color: var(--marca-texto-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topo-admin .acoes-topo { display: flex; gap: 6px; flex: 0 0 auto; }
+  .topo-admin .botao { background: var(--marca-fundo-2); border-color: var(--marca-linha); color: var(--marca-texto); }
+  @media (max-width: 400px) { .topo-admin .logo { height: 28px; } .topo-admin .botao.pequeno { padding: 7px 10px; } }
+  .barra-admin { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .barra-admin .campo { flex: 1 1 220px; margin: 0; }
+  .barra-admin .btn-filtros { background: var(--superficie); color: var(--texto); border-color: var(--linha); min-height: 46px; }
+  .barra-admin select { min-height: 46px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--linha); background: var(--superficie); font-size: 15px; }
+  .barra-admin .limpar-filtros { color: var(--acento-forte); }
   .caixa { background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); padding: 14px 16px; margin-bottom: 14px; }
   .caixa h2 { font: 600 21px var(--serif); margin: 0 0 10px; }
   .linha-flag { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
@@ -65,9 +76,6 @@
   .item .txt span { display: block; font-size: 12.5px; color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .lado { text-align: right; font-size: 13px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
   .item.rascunho { opacity: .65; }
-  .barra-busca { display: flex; gap: 8px; margin-bottom: 10px; }
-  .barra-busca .campo { flex: 1; margin: 0; }
-  .barra-busca select { max-width: 150px; }
 
   .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 30; border-radius: 999px; padding: 14px 22px; box-shadow: 0 6px 20px rgba(0,0,0,.22); }
 
@@ -79,7 +87,10 @@
   .foto-item .bts button { border: 0; border-radius: 50%; background: rgba(255,255,255,.94); color: #222; font-size: 16px; font-weight: 700; width: 34px; height: 34px; line-height: 1; padding: 0; }
   .foto-item .bts button.rm { color: #9b2f2f; }
   .foto-item.enviando { display: grid; place-items: center; font-size: 12px; color: var(--texto-2); }
-  .add-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .add-fotos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+  .foto-item .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.7); pointer-events: none; }
+  .foto-item .dur { position: absolute; right: 6px; top: 6px; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 999px; }
+  .foto-item .capa-vazia { width: 100%; height: 100%; display: grid; place-items: center; background: #24272a; color: #fff; font-size: 12px; }
   .add-fotos label { cursor: pointer; }
   .add-fotos input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 
@@ -114,12 +125,18 @@
   <p style="margin-top:22px;text-align:center"><a class="link" href="./">Ver o catálogo</a></p>
 </section>
 
+<!-- ============ TOPO (lista e formulário) ============ -->
+<header class="topo-admin" id="topo-admin" hidden>
+  <div class="interno">
+    <img class="logo" src="assets/logo-oligran.png" alt="Oligran Distribuidora" width="201" height="56">
+    <div class="titulo"><b id="ta-titulo">Painel</b><small id="quem"></small></div>
+    <div class="acoes-topo" id="acoes-lista"><a class="botao pequeno" href="./" target="_blank" rel="noopener">Ver site</a><button class="botao pequeno" id="b-sair" type="button">Sair</button></div>
+    <div class="acoes-topo" id="acoes-form" hidden><button class="botao pequeno" id="b-voltar" type="button">Cancelar</button></div>
+  </div>
+</header>
+
 <!-- ============ LISTA ============ -->
 <section id="tela-lista" class="painel" hidden>
-  <div class="cabeca">
-    <div><h1>Pedras</h1><div class="sub" id="quem"></div></div>
-    <div style="display:flex;gap:6px"><a class="botao pequeno" href="./" target="_blank" rel="noopener">Ver site</a><button class="botao pequeno" id="b-sair" type="button">Sair</button></div>
-  </div>
 
   <div class="caixa linha-flag">
     <div><strong>Mostrar preços no site</strong><p id="txt-flag">Todos que abrirem o catálogo veem o valor por m².</p></div>
@@ -135,12 +152,16 @@
     </div>
   </details>
 
-  <div class="barra-busca">
-    <label class="campo"><span class="oculto-leitor">Buscar</span><input type="search" id="busca" placeholder="Buscar nome, código ou lote"></label>
-    <select id="f-status" aria-label="Filtrar" style="margin:0;padding:0 10px;border-radius:10px;border:1px solid var(--linha);background:var(--superficie)">
-      <option value="">Todas</option><option value="disponivel">Disponíveis</option><option value="reservado">Reservadas</option>
-      <option value="sob_consulta">Sob consulta</option><option value="esgotado">Esgotadas</option><option value="rascunho">Fora do site</option>
+  <div class="barra-admin">
+    <label class="campo"><span class="oculto-leitor">Buscar</span><input type="search" id="busca" placeholder="Buscar nome, código, lote ou cor"></label>
+    <button class="btn-filtros" type="button" id="b-filtros" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+      Filtros <span class="num" id="n-filtros" hidden></span></button>
+    <select id="f-ordem" aria-label="Ordenar">
+      <option value="nome">Nome A–Z</option><option value="recentes">Mais recentes</option>
+      <option value="menor">Menor preço</option><option value="maior">Maior preço</option><option value="estoque">Maior estoque</option>
     </select>
+    <button class="limpar-filtros" type="button" id="b-limpar-filtros" hidden>Limpar</button>
   </div>
   <p class="contagem" id="contagem"></p>
   <div class="lista" id="lista"><div class="carregando">Carregando…</div></div>
@@ -149,20 +170,17 @@
 
 <!-- ============ FORMULÁRIO ============ -->
 <section id="tela-form" class="painel" hidden>
-  <div class="cabeca">
-    <h1 id="titulo-form">Nova pedra</h1>
-    <button class="botao pequeno" id="b-voltar" type="button">Cancelar</button>
-  </div>
   <div class="msg-erro" id="erro-form" hidden role="alert"></div>
   <form id="form" novalidate autocomplete="off">
     <div class="caixa">
-      <h2>Fotos</h2>
+      <h2>Fotos e vídeos</h2>
       <div class="fotos" id="fotos"></div>
       <div class="add-fotos">
         <label class="botao"><input type="file" id="in-camera" accept="image/*" capture="environment">📷 Tirar foto</label>
-        <label class="botao"><input type="file" id="in-galeria" accept="image/*" multiple>🖼️ Da galeria</label>
+        <label class="botao"><input type="file" id="in-video" accept="video/*" capture="environment">🎥 Gravar vídeo</label>
+        <label class="botao"><input type="file" id="in-galeria" accept="image/*,video/*" multiple>🖼️ Da galeria</label>
       </div>
-      <p class="contagem" style="margin:8px 0 0">A primeira foto é a que aparece no catálogo.</p>
+      <p class="contagem" style="margin:8px 0 0">A primeira mídia é a capa no catálogo. Vídeos vão na qualidade original, até 50 MB cada.</p>
     </div>
 
     <div class="caixa">
@@ -245,6 +263,7 @@
   C.avisoDemo();
 
   let cliente, produtos = [], config = {}, editando = null, fotos = [], novasEnviadas = [], removidas = [], sujo = false, enviando = 0;
+  const filtros = C.Filtros({ modo: 'admin', botao: $('b-filtros'), aoMudar: () => desenharLista() });
 
   /* ---------- mensagens ---------- */
   function traduzir(e) {
@@ -264,7 +283,13 @@
     el.textContent = t; el.classList.toggle('erro', !!ehErro); el.hidden = false;
     clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), ehErro ? 4500 : 2600);
   }
-  const mostrar = (tela) => ['tela-login', 'tela-lista', 'tela-form'].forEach((id) => ($(id).hidden = id !== tela));
+  const mostrar = (tela) => {
+    ['tela-login', 'tela-lista', 'tela-form'].forEach((id) => ($(id).hidden = id !== tela));
+    $('topo-admin').hidden = tela === 'tela-login';
+    $('acoes-lista').hidden = tela !== 'tela-lista';
+    $('acoes-form').hidden = tela !== 'tela-form';
+    if (tela === 'tela-lista') $('ta-titulo').textContent = 'Painel';
+  };
 
   /* ---------- login ---------- */
   async function iniciar() {
@@ -321,6 +346,7 @@
     }
     config = rc.data || { mostrar_preco: true };
     produtos = rp.data || [];
+    filtros.definirProdutos(produtos);
     $('flag-preco').checked = !!config.mostrar_preco; textoFlag();
     $('c-nome').value = config.nome_empresa || '';
     $('c-zap').value = config.whatsapp || '';
@@ -328,27 +354,31 @@
   }
 
   function desenharLista() {
-    const termos = C.semAcento($('busca').value).split(/\s+/).filter(Boolean);
-    const st = $('f-status').value;
-    const lista = produtos.filter((p) => {
-      const txt = C.semAcento([p.nome, p.codigo, p.lote, p.cor, p.tipo].join(' '));
-      const okSt = !st || (st === 'rascunho' ? !p.publicado : p.status === st);
-      return okSt && termos.every((t) => txt.includes(t));
-    });
+    filtros.definir({ busca: $('busca').value });
+    const lista = filtros.aplicar(produtos, $('f-ordem').value);
+    const n = filtros.quantidadeAtivos();
+    $('n-filtros').hidden = !n; $('n-filtros').textContent = n;
+    $('b-limpar-filtros').hidden = !n && !$('busca').value;
     $('contagem').textContent = produtos.length ? `${lista.length} de ${produtos.length} pedras` : '';
     if (!produtos.length) { $('lista').innerHTML = '<div class="vazio"><strong>Nenhuma pedra ainda</strong>Toque em “+ Nova pedra” para cadastrar a primeira.</div>'; return; }
     if (!lista.length) { $('lista').innerHTML = '<div class="vazio">Nada encontrado com esse filtro.</div>'; return; }
     $('lista').innerHTML = lista.map((p) => {
-      const f = C.normalizarFotos(p.fotos)[0];
+      const ms = C.normalizarFotos(p.fotos);
+      const f = ms.find((m) => m.p);
+      const nv = ms.filter((m) => m.tipo === 'video').length;
+      const a = C.areas(p);
       return `<button class="item ${p.publicado ? '' : 'rascunho'}" type="button" data-id="${C.esc(p.id)}">
         <div class="mini">${f ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="" loading="lazy">` : ''}</div>
-        <div class="txt"><b>${C.esc(p.nome)}</b><span>${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : ''].filter(Boolean).join(' · '))}</span>
-          <span>${p.preco_m2 != null ? C.esc(C.fmtBRL(p.preco_m2)) + '/m²' : 'Sem preço'}${p.publicado ? '' : ' · fora do site'}</span></div>
+        <div class="txt"><b>${C.esc(p.nome)}</b><span>${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : '', p.cor].filter(Boolean).join(' · '))}</span>
+          <span>${p.preco_m2 != null ? C.esc(C.fmtBRL(p.preco_m2)) + '/m²' : 'Sem preço'}${a.total ? ' · ' + C.esc(C.fmtNum(a.total)) + ' m²' : ''}${nv ? ' · ▶ ' + nv : ''}${p.publicado ? '' : ' · fora do site'}</span></div>
         <div class="lado">${C.badgeStatus(p.status)}</div></button>`;
     }).join('');
   }
-  $('busca').addEventListener('input', desenharLista);
-  $('f-status').addEventListener('change', desenharLista);
+  let tBusca;
+  $('busca').addEventListener('input', () => { clearTimeout(tBusca); tBusca = setTimeout(desenharLista, 120); });
+  $('f-ordem').addEventListener('change', desenharLista);
+  $('b-filtros').addEventListener('click', () => filtros.abrir());
+  $('b-limpar-filtros').addEventListener('click', () => { $('busca').value = ''; filtros.limpar(); desenharLista(); });
   $('lista').addEventListener('click', (e) => { const b = e.target.closest('.item'); if (b) abrirForm(produtos.find((p) => String(p.id) === b.dataset.id)); });
   $('b-novo').onclick = () => abrirForm(null);
 
@@ -399,7 +429,7 @@
     form.reset(); limparErros(); $('erro-form').hidden = true;
     editando = p ? p.id : null;
     const d = p || base || {};
-    $('titulo-form').textContent = p ? 'Editar pedra' : (base ? 'Novo lote' : 'Nova pedra');
+    $('ta-titulo').textContent = p ? 'Editar pedra' : (base ? 'Novo lote' : 'Nova pedra');
     $('extra').hidden = !p;
     ['nome', 'codigo', 'lote', 'cor', 'origem', 'observacoes'].forEach((k) => (campo(k).value = d[k] || ''));
     garantirOpcao(campo('tipo'), d.tipo); garantirOpcao(campo('acabamento'), d.acabamento);
@@ -448,10 +478,11 @@
   /* ---------- fotos ---------- */
   function desenharFotos() {
     const blocos = fotos.map((f, i) => `<div class="foto-item">
-        <img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="Foto ${i + 1}">
-        ${i === 0 ? '<span class="principal">Principal</span>' : ''}
-        <div class="bts">${i > 0 ? `<button type="button" data-acao="principal" data-i="${i}" aria-label="Tornar foto ${i + 1} a principal" title="Tornar principal">★</button>` : '<span></span>'}
-          <button type="button" class="rm" data-acao="remover" data-i="${i}" aria-label="Remover foto ${i + 1}" title="Remover">✕</button></div></div>`);
+        ${f.p ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="${f.tipo === 'video' ? 'Vídeo' : 'Foto'} ${i + 1}">` : '<div class="capa-vazia">vídeo</div>'}
+        ${f.tipo === 'video' ? `<span class="play" aria-hidden="true">▶</span>${f.d ? `<span class="dur">${C.fmtDuracao(f.d)}</span>` : ''}` : ''}
+        ${i === 0 ? '<span class="principal">Capa</span>' : ''}
+        <div class="bts">${i > 0 ? `<button type="button" data-acao="principal" data-i="${i}" aria-label="Usar item ${i + 1} como capa" title="Usar como capa">★</button>` : '<span></span>'}
+          <button type="button" class="rm" data-acao="remover" data-i="${i}" aria-label="Remover item ${i + 1}" title="Remover">✕</button></div></div>`);
     for (let i = 0; i < enviando; i++) blocos.push('<div class="foto-item enviando">Enviando…</div>');
     $('fotos').innerHTML = blocos.join('');
     $('fotos').hidden = !blocos.length;
@@ -461,7 +492,7 @@
     const i = Number(b.dataset.i);
     if (b.dataset.acao === 'principal') { fotos.unshift(fotos.splice(i, 1)[0]); }
     else {
-      if (!confirm('Remover esta foto?')) return;
+      if (!confirm(fotos[i].tipo === 'video' ? 'Remover este vídeo?' : 'Remover esta foto?')) return;
       const [f] = fotos.splice(i, 1);
       if (novasEnviadas.includes(f)) { apagarArquivos([f]); novasEnviadas = novasEnviadas.filter((x) => x !== f); }
       else removidas.push(f);
@@ -470,31 +501,62 @@
   });
 
   async function enviarFotos(lista) {
-    const arquivos = [...lista].filter((a) => /^image\//.test(a.type) || /\.(heic|heif|jpe?g|png|webp)$/i.test(a.name));
-    if (!arquivos.length) return;
-    if (fotos.length + arquivos.length > 12) { toast('Máximo de 12 fotos por pedra.', true); return; }
-    enviando += arquivos.length; desenharFotos(); sujo = true;
+    const todos = [...lista];
+    const ehVideo = (a) => /^video\//.test(a.type) || /\.(mov|mp4|m4v|webm|3gp)$/i.test(a.name);
+    const videos = todos.filter(ehVideo);
+    const arquivos = todos.filter((a) => !ehVideo(a) && (/^image\//.test(a.type) || /\.(heic|heif|jpe?g|png|webp)$/i.test(a.name)));
+    const nFotos = fotos.filter((f) => f.tipo !== 'video').length, nVideos = fotos.length - nFotos;
+    if (nFotos + arquivos.length > 12) { toast('Máximo de 12 fotos por pedra.', true); return; }
+    if (nVideos + videos.length > 4) { toast('Máximo de 4 vídeos por pedra.', true); return; }
+    const grandes = videos.filter((v) => v.size > C.LIMITE_VIDEO_MB * 1048576);
+    if (grandes.length) {
+      toast(`Vídeo de ${Math.round(grandes[0].size / 1048576)} MB passa do limite de ${C.LIMITE_VIDEO_MB} MB. Grave um trecho mais curto ou em 1080p.`, true);
+      return;
+    }
+    if (!arquivos.length && !videos.length) return;
+    enviando += arquivos.length + videos.length; desenharFotos(); sujo = true;
     const id = form.dataset.id;
+    const op = (tipo) => ({ contentType: tipo, cacheControl: '31536000', upsert: false });
+    const nome = () => `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     for (const arq of arquivos) {
       try {
         const [g, p] = await Promise.all([C.comprimirImagem(arq, 2560, 0.88), C.comprimirImagem(arq, 480, 0.72)]);
-        const base = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        const op = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
-        const r1 = await cliente.storage.from('fotos').upload(base + '.jpg', g, op);
+        const base = nome();
+        const r1 = await cliente.storage.from('fotos').upload(base + '.jpg', g, op('image/jpeg'));
         if (r1.error) throw r1.error;
-        const r2 = await cliente.storage.from('fotos').upload(base + '_p.jpg', p, op);
+        const r2 = await cliente.storage.from('fotos').upload(base + '_p.jpg', p, op('image/jpeg'));
         if (r2.error) { await cliente.storage.from('fotos').remove([base + '.jpg']); throw r2.error; }
-        const f = { g: base + '.jpg', p: base + '_p.jpg' };
+        const f = { tipo: 'foto', g: base + '.jpg', p: base + '_p.jpg' };
         fotos.push(f); novasEnviadas.push(f);
       } catch (e) {
         console.error(e); toast('Falha ao enviar foto: ' + traduzir(e), true);
       } finally { enviando--; desenharFotos(); }
     }
+    for (const arq of videos) {
+      try {
+        const { capa, duracao } = await C.gerarCapa(arq);
+        const base = nome();
+        const caminho = base + '.' + C.extVideo(arq);
+        const r1 = await cliente.storage.from('fotos').upload(caminho, arq, op(C.tipoVideo(arq)));
+        if (r1.error) throw r1.error;
+        let caminhoCapa = '';
+        if (capa) {
+          const r2 = await cliente.storage.from('fotos').upload(base + '_capa.jpg', capa, op('image/jpeg'));
+          if (!r2.error) caminhoCapa = base + '_capa.jpg';
+        }
+        const f = { tipo: 'video', v: caminho, g: caminho, p: caminhoCapa, d: duracao ? Math.round(duracao) : null };
+        fotos.push(f); novasEnviadas.push(f);
+      } catch (e) {
+        console.error(e);
+        const m = traduzir(e);
+        toast(/maximum allowed size|too large|413/i.test(m) ? `Vídeo grande demais para o plano gratuito (limite ${C.LIMITE_VIDEO_MB} MB).` : 'Falha ao enviar vídeo: ' + m, true);
+      } finally { enviando--; desenharFotos(); }
+    }
   }
-  ['in-camera', 'in-galeria'].forEach((id) => $(id).addEventListener('change', (e) => { enviarFotos(e.target.files); e.target.value = ''; }));
+  ['in-camera', 'in-galeria', 'in-video'].forEach((id) => $(id).addEventListener('change', (e) => { enviarFotos(e.target.files); e.target.value = ''; }));
 
   async function apagarArquivos(lista) {
-    const caminhos = [...new Set(lista.flatMap((f) => [f.g, f.p]).filter((c) => c && !/^(data:|blob:|https?:)/.test(c)))];
+    const caminhos = [...new Set(lista.flatMap((f) => [f.g, f.p, f.v]).filter((c) => c && !/^(data:|blob:|https?:)/.test(c)))];
     if (!caminhos.length) return;
     try { await cliente.storage.from('fotos').remove(caminhos); } catch (e) { console.warn('não apagou arquivos', e); }
   }
@@ -541,13 +603,13 @@
     d.espessura_cm = sel === 'outra' ? num('espessura_outra', { positivo: true, max: 50, msg: 'Espessura inválida.' }) : (sel ? Number(sel) : null);
     if (!d.nome) erros.unshift(marcarErro('nome', 'Informe o nome.'));
     if (!d.codigo) erros.splice(d.nome ? 0 : 1, 0, marcarErro('codigo', 'Informe o código.'));
-    d.fotos = fotos.map((f) => ({ g: f.g, p: f.p }));
+    d.fotos = fotos.map((f) => (f.tipo === 'video' ? { v: f.v, p: f.p || '', d: f.d || null } : { g: f.g, p: f.p }));
     return { d, erros };
   }
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (enviando) { toast('Aguarde as fotos terminarem de enviar.', true); return; }
+    if (enviando) { toast('Aguarde o envio das fotos e vídeos terminar.', true); return; }
     const { d, erros } = lerFormulario();
     $('erro-form').hidden = true;
     if (erros.length) { erros[0].focus(); erros[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); toast('Confira os campos marcados.', true); return; }

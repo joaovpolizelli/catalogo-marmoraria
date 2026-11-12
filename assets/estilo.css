@@ -168,3 +168,51 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .salvar .botao { flex: 1 1 auto; white-space: nowrap; }
 .salvar .botao.primario { flex-grow: 2; }
 .botao .ico { width: 18px; height: 18px; flex: 0 0 auto; }
+
+/* ---------- barra de filtros ---------- */
+.barra-filtros { display: flex; gap: 8px; align-items: center; padding-top: 10px; flex-wrap: wrap; }
+.btn-filtros { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--marca-linha); background: var(--marca-fundo-2);
+  color: var(--marca-texto); border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 600; min-height: 38px; }
+.btn-filtros .num { background: var(--acento); color: var(--acento-texto); border-radius: 999px; min-width: 20px; height: 20px; padding: 0 6px;
+  font-size: 12px; display: inline-grid; place-items: center; }
+.btn-filtros svg { width: 16px; height: 16px; }
+.barra-filtros select { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--marca-linha); background: var(--marca-fundo-2);
+  color: var(--marca-texto); font-size: 14px; min-height: 38px; color-scheme: dark; max-width: 100%; }
+.limpar-filtros { background: none; border: 0; color: var(--acento); font-weight: 600; font-size: 14px; padding: 8px 4px; }
+
+/* ---------- folha de filtros ---------- */
+.filtros-fundo { position: fixed; inset: 0; z-index: 60; background: rgba(10, 11, 12, .6); display: flex; align-items: flex-end; justify-content: center; }
+@media (min-width: 760px) { .filtros-fundo { align-items: center; padding: 24px; } }
+.filtros-folha { background: var(--superficie); color: var(--texto); width: 100%; max-width: 640px; max-height: 90vh; display: flex; flex-direction: column;
+  border-radius: 18px 18px 0 0; overflow: hidden; }
+@media (min-width: 760px) { .filtros-folha { border-radius: 18px; } }
+.filtros-topo { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--marca-fundo); color: var(--marca-texto);
+  border-bottom: 3px solid var(--acento); }
+.filtros-topo h2 { margin: 0; font: 600 26px/1 var(--serif); letter-spacing: .3px; }
+.fechar-filtros { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--marca-fundo-2); color: var(--marca-texto); font-size: 20px; line-height: 1; }
+.filtros-corpo { padding: 14px 16px 4px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.filtros-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+@media (max-width: 360px) { .filtros-grade { grid-template-columns: 1fr; } }
+.filtros-corpo .campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; min-width: 0; }
+.filtros-corpo .campo > span { font-size: 13.5px; font-weight: 600; }
+.filtros-corpo .campo small { color: var(--texto-2); font-size: 12.5px; }
+.filtros-corpo select, .filtros-corpo input[type=text] { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--linha);
+  background: var(--superficie); font-size: 16px; min-height: 44px; }
+.faixa { border: 0; padding: 0; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.faixa legend { font-size: 13.5px; font-weight: 600; padding: 0; margin-bottom: 5px; }
+.faixa label { flex: 1; }
+.faixa span[aria-hidden] { color: var(--texto-2); font-size: 14px; }
+.filtros-corpo .marcar { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 15px; }
+.filtros-corpo .marcar input { width: 22px; height: 22px; accent-color: var(--acento); }
+.filtros-rodape { display: flex; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--linha); }
+.filtros-rodape .botao { flex: 1; }
+.filtros-rodape .botao.primario { flex: 2; }
+
+/* ---------- vídeos ---------- */
+.galeria video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+.selo-video { position: absolute; right: 8px; bottom: 8px; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,.65); color: #fff;
+  font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+.selo-video svg { width: 11px; height: 11px; }
+.miniaturas button { position: relative; }
+.miniaturas .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 16px; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.capa-vazia { width: 100%; height: 100%; display: grid; place-items: center; background: #24272a; color: #fff; font-size: 12px; }
