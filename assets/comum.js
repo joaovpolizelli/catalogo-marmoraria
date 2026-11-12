@@ -158,6 +158,92 @@
   }
 
   /* =====================================================================
+     COMPACTAR VÍDEO no próprio celular antes de enviar
+     - converte para H.264 (MP4) com no máximo 1920 px no lado maior (1080p)
+     - taxa ajustada para o arquivo ficar até ~45 MB; vídeos curtos ficam bem menores
+     - sem áudio (vídeos de chapa não precisam de som e o arquivo fica mais leve)
+     - leva mais ou menos o tempo do vídeo; a tela precisa ficar aberta
+     ===================================================================== */
+  const MUXER_URL = 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';
+  const ALVO_MB = 45, TAXA_MAX = 6e6, TAXA_MIN = 2e6;
+  function carregarMuxer() {
+    if (window.Mp4Muxer) return Promise.resolve(window.Mp4Muxer);
+    return new Promise((ok, erro) => {
+      const s = document.createElement('script'); s.src = MUXER_URL;
+      s.onload = () => (window.Mp4Muxer ? ok(window.Mp4Muxer) : erro(new Error('compactador não carregou')));
+      s.onerror = () => erro(new Error('Sem internet para carregar o compactador de vídeo.'));
+      document.head.appendChild(s);
+    });
+  }
+  const podeCompactar = () => typeof window.VideoEncoder === 'function' && typeof window.VideoFrame === 'function';
+
+  async function compactarVideo(arquivo, aoProgresso) {
+    aoProgresso = aoProgresso || (() => {});
+    if (!podeCompactar()) throw Object.assign(new Error('Este navegador não consegue compactar vídeo. Atualize o iPhone (iOS 17 ou mais novo).'), { codigo: 'sem-suporte' });
+    const Mp4 = await carregarMuxer();
+    const url = URL.createObjectURL(arquivo);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.src = url;
+    v.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+    document.body.appendChild(v);
+    let encoder = null;
+    const limpar = () => { try { v.pause(); } catch (e) {} v.remove(); URL.revokeObjectURL(url); if (encoder && encoder.state !== 'closed') try { encoder.close(); } catch (e) {} };
+    try {
+      await new Promise((ok, erro) => { v.onloadedmetadata = ok; v.onerror = () => erro(Object.assign(new Error('Não consegui abrir esse vídeo.'), { codigo: 'formato' })); setTimeout(() => erro(new Error('O vídeo demorou demais para abrir.')), 20000); });
+      const duracao = v.duration;
+      if (!(duracao > 0) || !isFinite(duracao)) throw new Error('Não consegui ler a duração do vídeo.');
+      const taxaIdeal = (ALVO_MB * 1048576 * 8) / duracao;
+      if (taxaIdeal < TAXA_MIN) throw Object.assign(new Error(`Vídeo longo demais (${Math.round(duracao)} s). Envie trechos de até ${fmtNum((ALVO_MB * 8388608) / TAXA_MIN / 60, 1)} min.`), { codigo: 'longo' });
+      const taxa = Math.round(Math.min(TAXA_MAX, taxaIdeal * 0.92));
+      const esc = Math.min(1, 1920 / Math.max(v.videoWidth, v.videoHeight));
+      const W = Math.max(2, Math.round(v.videoWidth * esc / 2) * 2), H = Math.max(2, Math.round(v.videoHeight * esc / 2) * 2);
+      let config = null;
+      for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42002a', 'avc1.42001f']) {
+        const c = { codec, width: W, height: H, bitrate: taxa, framerate: 30, latencyMode: 'quality', avc: { format: 'avc' } };
+        try { const r = await VideoEncoder.isConfigSupported(c); if (r.supported) { config = r.config; break; } } catch (e) {}
+      }
+      if (!config) throw Object.assign(new Error('Este celular não consegue gerar vídeo MP4 no navegador.'), { codigo: 'sem-suporte' });
+      const alvo = new Mp4.ArrayBufferTarget();
+      const muxer = new Mp4.Muxer({ target: alvo, video: { codec: 'avc', width: W, height: H }, fastStart: 'in-memory', firstTimestampBehavior: 'offset' });
+      let erroEnc = null;
+      encoder = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { erroEnc = e; } });
+      encoder.configure(config);
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d', { alpha: false });
+      let ultimoT = -1, quadros = 0, ultimaChave = -10;
+      const capturar = (t) => {
+        if (t <= ultimoT || erroEnc) return;
+        ultimoT = t;
+        ctx.drawImage(v, 0, 0, W, H);
+        const frame = new VideoFrame(cv, { timestamp: Math.round(t * 1e6) });
+        const chave = t - ultimaChave >= 2; if (chave) ultimaChave = t;
+        encoder.encode(frame, { keyFrame: chave }); frame.close(); quadros++;
+        aoProgresso(Math.min(0.99, t / duracao));
+        if (encoder.encodeQueueSize > 30) v.pause(), setTimeout(() => { if (!v.ended) v.play().catch(() => {}); }, 60);
+      };
+      const voltar = () => { if (document.visibilityState === 'visible' && v.paused && !v.ended) v.play().catch(() => {}); };
+      document.addEventListener('visibilitychange', voltar);
+      await new Promise((ok, erro) => {
+        const usarRVFC = typeof v.requestVideoFrameCallback === 'function';
+        const passo = (agora, meta) => { capturar(meta ? meta.mediaTime : v.currentTime); if (!v.ended) v.requestVideoFrameCallback(passo); };
+        let timer = null;
+        if (usarRVFC) v.requestVideoFrameCallback(passo);
+        else timer = setInterval(() => capturar(v.currentTime), 1000 / 30);
+        v.onended = () => { if (timer) clearInterval(timer); capturar(duracao); ok(); };
+        v.onerror = () => { if (timer) clearInterval(timer); erro(new Error('O vídeo parou de tocar durante a compactação.')); };
+        v.play().catch((e) => erro(e));
+      });
+      document.removeEventListener('visibilitychange', voltar);
+      await encoder.flush();
+      if (erroEnc) throw erroEnc;
+      muxer.finalize();
+      if (quadros < 2) throw new Error('A compactação não capturou o vídeo. Mantenha a tela aberta e tente de novo.');
+      aoProgresso(1);
+      return { blob: new Blob([alvo.buffer], { type: 'video/mp4' }), duracao, largura: W, altura: H, quadros };
+    } finally { limpar(); }
+  }
+
+  /* =====================================================================
      FILTROS — usados no catálogo (modo 'publico') e no painel (modo 'admin').
      Monta uma folha de filtros, guarda o estado e filtra/ordena a lista.
      ===================================================================== */
@@ -315,7 +401,7 @@
   window.Catalogo = {
     MODO_DEMO, TIPOS, ACABAMENTOS, APLICACOES, ESPESSURAS, STATUS,
     criarCliente, esc, fmtBRL, fmtNum, lerNumero, areas, emCm, normalizarFotos, urlFoto,
-    temVideo, fmtDuracao, LIMITE_VIDEO_MB, tipoVideo, extVideo, gerarCapa, Filtros,
+    temVideo, fmtDuracao, LIMITE_VIDEO_MB, tipoVideo, extVideo, gerarCapa, Filtros, compactarVideo, podeCompactar,
     comprimirImagem, rotuloStatus, badgeStatus, semAcento, avisoDemo
   };
 })();

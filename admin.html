@@ -180,7 +180,7 @@
         <label class="botao"><input type="file" id="in-video" accept="video/*" capture="environment">🎥 Gravar vídeo</label>
         <label class="botao"><input type="file" id="in-galeria" accept="image/*,video/*" multiple>🖼️ Da galeria</label>
       </div>
-      <p class="contagem" style="margin:8px 0 0">A primeira mídia é a capa no catálogo. Vídeos vão na qualidade original, até 50 MB cada.</p>
+      <p class="contagem" style="margin:8px 0 0">A primeira mídia é a capa no catálogo. Vídeos são compactados em 1080p antes de subir (sem som); deixe a tela aberta enquanto compacta.</p>
     </div>
 
     <div class="caixa">
@@ -262,7 +262,7 @@
   const campo = (n) => form.elements[n];
   C.avisoDemo();
 
-  let cliente, produtos = [], config = {}, editando = null, fotos = [], novasEnviadas = [], removidas = [], sujo = false, enviando = 0;
+  let cliente, produtos = [], config = {}, editando = null, fotos = [], novasEnviadas = [], removidas = [], sujo = false, enviando = 0, progressoVideo = '';
   const filtros = C.Filtros({ modo: 'admin', botao: $('b-filtros'), aoMudar: () => desenharLista() });
 
   /* ---------- mensagens ---------- */
@@ -483,7 +483,7 @@
         ${i === 0 ? '<span class="principal">Capa</span>' : ''}
         <div class="bts">${i > 0 ? `<button type="button" data-acao="principal" data-i="${i}" aria-label="Usar item ${i + 1} como capa" title="Usar como capa">★</button>` : '<span></span>'}
           <button type="button" class="rm" data-acao="remover" data-i="${i}" aria-label="Remover item ${i + 1}" title="Remover">✕</button></div></div>`);
-    for (let i = 0; i < enviando; i++) blocos.push('<div class="foto-item enviando">Enviando…</div>');
+    for (let i = 0; i < enviando; i++) blocos.push(`<div class="foto-item enviando">${i === 0 && progressoVideo ? C.esc(progressoVideo) : 'Enviando…'}</div>`);
     $('fotos').innerHTML = blocos.join('');
     $('fotos').hidden = !blocos.length;
   }
@@ -508,11 +508,6 @@
     const nFotos = fotos.filter((f) => f.tipo !== 'video').length, nVideos = fotos.length - nFotos;
     if (nFotos + arquivos.length > 12) { toast('Máximo de 12 fotos por pedra.', true); return; }
     if (nVideos + videos.length > 4) { toast('Máximo de 4 vídeos por pedra.', true); return; }
-    const grandes = videos.filter((v) => v.size > C.LIMITE_VIDEO_MB * 1048576);
-    if (grandes.length) {
-      toast(`Vídeo de ${Math.round(grandes[0].size / 1048576)} MB passa do limite de ${C.LIMITE_VIDEO_MB} MB. Grave um trecho mais curto ou em 1080p.`, true);
-      return;
-    }
     if (!arquivos.length && !videos.length) return;
     enviando += arquivos.length + videos.length; desenharFotos(); sujo = true;
     const id = form.dataset.id;
@@ -534,10 +529,28 @@
     }
     for (const arq of videos) {
       try {
-        const { capa, duracao } = await C.gerarCapa(arq);
+        progressoVideo = 'Preparando vídeo…'; desenharFotos();
+        const { capa } = await C.gerarCapa(arq);
+        /* compacta sempre; se o navegador não conseguir, envia o original (se couber) */
+        let envio = arq, duracao = null;
+        try {
+          let ultimo = -1;
+          const r = await C.compactarVideo(arq, (f) => {
+            const pct = Math.floor(f * 100);
+            if (pct !== ultimo) { ultimo = pct; progressoVideo = `Compactando ${pct}%`; desenharFotos(); }
+          });
+          duracao = r.duracao;
+          if (r.blob.size < arq.size || arq.size > C.LIMITE_VIDEO_MB * 1048576) envio = r.blob;
+        } catch (e) {
+          if (e.codigo === 'longo') throw e;
+          console.warn('compactação falhou, tentando o original', e);
+          if (arq.size > C.LIMITE_VIDEO_MB * 1048576) throw new Error(`não deu para compactar e o original tem ${Math.round(arq.size / 1048576)} MB (limite ${C.LIMITE_VIDEO_MB} MB). ${e.message}`);
+        }
+        if (envio.size > C.LIMITE_VIDEO_MB * 1048576) throw new Error(`mesmo compactado ficou com ${Math.round(envio.size / 1048576)} MB. Grave um trecho mais curto.`);
+        progressoVideo = `Enviando ${Math.max(1, Math.round(envio.size / 1048576))} MB…`; desenharFotos();
         const base = nome();
-        const caminho = base + '.' + C.extVideo(arq);
-        const r1 = await cliente.storage.from('fotos').upload(caminho, arq, op(C.tipoVideo(arq)));
+        const caminho = base + '.' + (envio === arq ? C.extVideo(arq) : 'mp4');
+        const r1 = await cliente.storage.from('fotos').upload(caminho, envio, op(envio === arq ? C.tipoVideo(arq) : 'video/mp4'));
         if (r1.error) throw r1.error;
         let caminhoCapa = '';
         if (capa) {
@@ -545,12 +558,13 @@
           if (!r2.error) caminhoCapa = base + '_capa.jpg';
         }
         const f = { tipo: 'video', v: caminho, g: caminho, p: caminhoCapa, d: duracao ? Math.round(duracao) : null };
+        if (!f.d) { const info = await C.gerarCapa(envio).catch(() => ({})); if (info && info.duracao) f.d = Math.round(info.duracao); }
         fotos.push(f); novasEnviadas.push(f);
       } catch (e) {
         console.error(e);
         const m = traduzir(e);
-        toast(/maximum allowed size|too large|413/i.test(m) ? `Vídeo grande demais para o plano gratuito (limite ${C.LIMITE_VIDEO_MB} MB).` : 'Falha ao enviar vídeo: ' + m, true);
-      } finally { enviando--; desenharFotos(); }
+        toast(/maximum allowed size|too large|413/i.test(m) ? `Vídeo grande demais para o plano gratuito (limite ${C.LIMITE_VIDEO_MB} MB).` : 'Falha no vídeo: ' + m, true);
+      } finally { enviando--; progressoVideo = ''; desenharFotos(); }
     }
   }
   ['in-camera', 'in-galeria', 'in-video'].forEach((id) => $(id).addEventListener('change', (e) => { enviarFotos(e.target.files); e.target.value = ''; }));
