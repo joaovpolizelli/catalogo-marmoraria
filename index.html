@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Catálogo de Mármores</title>
+<meta name="description" content="Catálogo de mármores, granitos e pedras naturais.">
+<meta name="theme-color" content="#f6f3ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Catálogo">
+<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+</head>
+<body>
+<header class="topo">
+  <div class="topo-interno">
+    <div class="marca">
+      <h1 id="empresa">Catálogo de Mármores</h1>
+      <small id="total"></small>
+    </div>
+    <label class="busca">
+      <span class="oculto-leitor">Buscar</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="busca" type="search" placeholder="Buscar por nome, código, lote ou cor" autocomplete="off" enterkeyhint="search">
+    </label>
+    <div class="chips" id="chips" role="group" aria-label="Tipo de pedra"></div>
+    <div class="filtros">
+      <select id="f-acabamento" aria-label="Acabamento"><option value="">Todos os acabamentos</option></select>
+      <select id="f-cor" aria-label="Cor"><option value="">Todas as cores</option></select>
+      <select id="f-status" aria-label="Disponibilidade">
+        <option value="">Toda disponibilidade</option>
+        <option value="ativos" selected>Ocultar esgotados</option>
+        <option value="disponivel">Só disponíveis</option>
+      </select>
+      <select id="f-ordem" aria-label="Ordenar">
+        <option value="nome">Ordem: nome</option>
+        <option value="recentes">Ordem: mais recentes</option>
+        <option value="menor">Ordem: menor preço</option>
+        <option value="maior">Ordem: maior preço</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main class="conteudo">
+  <p class="contagem" id="contagem" aria-live="polite"></p>
+  <div class="grade" id="grade"><div class="carregando">Carregando catálogo…</div></div>
+  <p class="aviso-rodape">Cores e veios variam entre chapas e lotes. Confirme valores e disponibilidade antes de fechar.</p>
+</main>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="d-nome">
+  <div class="folha" id="folha"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/demo.js"></script>
+<script src="assets/comum.js"></script>
+<script>
+(function () {
+  'use strict';
+  const C = window.Catalogo;
+  const $ = (id) => document.getElementById(id);
+  C.avisoDemo();
+
+  let cliente, produtos = [], config = {}, tipoAtivo = '';
+
+  async function carregar() {
+    try {
+      cliente = C.criarCliente();
+      const [rc, rp] = await Promise.all([
+        cliente.from('configuracoes').select('nome_empresa, whatsapp, mostrar_preco').eq('id', 1).maybeSingle(),
+        cliente.from('catalogo_publico').select('*').order('nome', { ascending: true })
+      ]);
+      if (rp.error) throw rp.error;
+      config = rc.data || {};
+      produtos = (rp.data || []).map((p) => Object.assign(p, {
+        _fotos: C.normalizarFotos(p.fotos),
+        _busca: C.semAcento([p.nome, p.codigo, p.lote, p.cor, p.tipo, p.origem, p.acabamento].join(' '))
+      }));
+      if (config.nome_empresa) { $('empresa').textContent = config.nome_empresa; document.title = config.nome_empresa + ' · Catálogo'; }
+      montarFiltros();
+      desenhar();
+      abrirPeloEndereco();
+    } catch (e) {
+      console.error(e);
+      $('grade').innerHTML = `<div class="vazio" style="grid-column:1/-1"><strong>Não foi possível carregar</strong>${C.esc(e.message || 'Verifique sua internet e tente de novo.')}<br><br><button class="botao" onclick="location.reload()">Tentar de novo</button></div>`;
+    }
+  }
+
+  function montarFiltros() {
+    const tipos = [...new Set(produtos.map((p) => p.tipo).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    $('chips').innerHTML = ['', ...tipos].map((t) =>
+      `<button class="chip" type="button" data-tipo="${C.esc(t)}" aria-pressed="${t === tipoAtivo}">${t ? C.esc(t) : 'Todos'}</button>`).join('');
+    $('chips').hidden = tipos.length < 2;
+    const preencher = (sel, valores) => {
+      const atual = sel.value; const primeiro = sel.options[0].outerHTML;
+      sel.innerHTML = primeiro + valores.map((v) => `<option>${C.esc(v)}</option>`).join('');
+      sel.value = valores.includes(atual) ? atual : '';
+      sel.hidden = valores.length < 2;
+    };
+    const uniq = (campo) => [...new Set(produtos.map((p) => p[campo]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    preencher($('f-acabamento'), uniq('acabamento'));
+    preencher($('f-cor'), uniq('cor'));
+    const temPreco = produtos.some((p) => p.preco_m2 != null);
+    [...$('f-ordem').options].forEach((o) => { if (o.value === 'menor' || o.value === 'maior') o.hidden = !temPreco; });
+    if (!temPreco && /menor|maior/.test($('f-ordem').value)) $('f-ordem').value = 'nome';
+  }
+
+  function filtrados() {
+    const termos = C.semAcento($('busca').value).split(/\s+/).filter(Boolean);
+    const ac = $('f-acabamento').value, cor = $('f-cor').value, st = $('f-status').value, ordem = $('f-ordem').value;
+    const lista = produtos.filter((p) =>
+      (!tipoAtivo || p.tipo === tipoAtivo) && (!ac || p.acabamento === ac) && (!cor || p.cor === cor) &&
+      (!st || (st === 'ativos' ? p.status !== 'esgotado' : p.status === st)) &&
+      termos.every((t) => p._busca.includes(t)));
+    const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
+    const preco = (p) => (p.preco_m2 == null ? null : Number(p.preco_m2));
+    lista.sort((a, b) => {
+      if (ordem === 'recentes') return String(b.atualizado_em).localeCompare(String(a.atualizado_em));
+      if (ordem === 'menor' || ordem === 'maior') {
+        const x = preco(a), y = preco(b);
+        if (x == null && y == null) return porNome(a, b); if (x == null) return 1; if (y == null) return -1;
+        return ordem === 'menor' ? x - y : y - x;
+      }
+      return porNome(a, b);
+    });
+    return lista;
+  }
+
+  function linhaPreco(p, grande) {
+    if (p.preco_m2 == null) return grande ? '<p class="sub">Valor sob consulta</p>' : '<span class="preco"><small>Sob consulta</small></span>';
+    return grande ? `<p class="preco-grande">${C.fmtBRL(p.preco_m2)} <small>/ m²</small></p>`
+      : `<span class="preco">${C.fmtBRL(p.preco_m2)} <small>/m²</small></span>`;
+  }
+
+  function desenhar() {
+    const lista = filtrados();
+    $('total').textContent = produtos.length ? `${produtos.length} ${produtos.length === 1 ? 'pedra' : 'pedras'}` : '';
+    $('contagem').textContent = lista.length === produtos.length ? '' : `${lista.length} de ${produtos.length} encontrados`;
+    if (!produtos.length) {
+      $('grade').innerHTML = '<div class="vazio" style="grid-column:1/-1"><strong>Catálogo em preparação</strong>Nenhuma pedra cadastrada ainda.</div>';
+      return;
+    }
+    if (!lista.length) {
+      $('grade').innerHTML = '<div class="vazio" style="grid-column:1/-1"><strong>Nada encontrado</strong>Tente outra palavra ou limpe os filtros.<br><br><button class="botao" id="limpar" type="button">Limpar filtros</button></div>';
+      $('limpar').onclick = limparFiltros;
+      return;
+    }
+    $('grade').innerHTML = lista.map((p) => {
+      const f = p._fotos[0];
+      const meta = [p.codigo, p.lote ? 'Lote ' + p.lote : '', p.espessura_cm ? C.fmtNum(p.espessura_cm) + ' cm' : ''].filter(Boolean).join(' · ');
+      return `<button class="card ${p.status === 'esgotado' ? 'esgotado' : ''}" type="button" data-id="${C.esc(p.id)}">
+        <div class="foto">${f ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="${C.esc(p.nome)}" loading="lazy">` : '<div class="sem-foto">Sem foto</div>'}
+          ${p.status !== 'disponivel' ? C.badgeStatus(p.status) : ''}</div>
+        <div class="info"><span class="nome">${C.esc(p.nome)}</span>
+          <span class="meta">${C.esc(meta)}</span>
+          <span class="meta">${C.esc([p.tipo, p.acabamento].filter(Boolean).join(' · '))}</span>
+          ${linhaPreco(p, false)}</div></button>`;
+    }).join('');
+  }
+
+  function limparFiltros() {
+    $('busca').value = ''; tipoAtivo = '';
+    ['f-acabamento', 'f-cor'].forEach((id) => ($(id).value = ''));
+    $('f-status').value = '';
+    montarFiltros(); desenhar();
+  }
+
+  /* ---------- detalhe ---------- */
+  let atual = null, fotoIdx = 0, focoAntes = null;
+  function abrir(id, empurrar) {
+    const p = produtos.find((x) => String(x.id) === String(id));
+    if (!p) return;
+    atual = p; fotoIdx = 0; focoAntes = document.activeElement;
+    const a = C.areas(p);
+    const itens = [
+      ['Código', p.codigo], ['Lote', p.lote], ['Tipo', p.tipo], ['Cor', p.cor], ['Acabamento', p.acabamento],
+      ['Espessura', p.espessura_cm ? C.fmtNum(p.espessura_cm) + ' cm' : ''],
+      ['Medida da chapa', p.comprimento_cm && p.altura_cm ? `${C.fmtNum(p.comprimento_cm)} × ${C.fmtNum(p.altura_cm)} cm` : ''],
+      ['Área por chapa', a.chapa ? C.fmtNum(a.chapa) + ' m²' : ''],
+      ['Chapas no lote', p.qtd_chapas != null && p.status !== 'esgotado' ? String(p.qtd_chapas) : ''],
+      ['Total disponível', a.total && p.status !== 'esgotado' ? C.fmtNum(a.total) + ' m²' : ''],
+      ['Origem', p.origem]
+    ].filter(([, v]) => v);
+    const link = location.href.split('#')[0] + '#p=' + encodeURIComponent(p.id);
+    const msg = `Olá! Tenho interesse na pedra *${p.nome}* (código ${p.codigo}${p.lote ? ', lote ' + p.lote : ''}).\n${link}`;
+    const zap = config.whatsapp ? `https://wa.me/${String(config.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}` : '';
+    $('folha').innerHTML = `
+      <button class="fechar" type="button" id="fechar" aria-label="Fechar">×</button>
+      <div class="galeria" id="galeria"></div>
+      <div class="miniaturas" id="minis"></div>
+      <div class="detalhe">
+        ${C.badgeStatus(p.status)}
+        <h2 id="d-nome">${C.esc(p.nome)}</h2>
+        <p class="sub">${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : ''].filter(Boolean).join(' · '))}</p>
+        ${linhaPreco(p, true)}
+        <dl class="ficha">${itens.map(([k, v]) => `<div><dt>${k}</dt><dd>${C.esc(v)}</dd></div>`).join('')}</dl>
+        ${(p.aplicacoes || []).length ? `<p class="sub">Indicado para</p><div class="etiquetas">${p.aplicacoes.map((x) => `<span>${C.esc(x)}</span>`).join('')}</div>` : ''}
+        ${p.observacoes ? `<p class="obs">${C.esc(p.observacoes)}</p>` : ''}
+        <div class="acoes">
+          ${zap ? `<a class="botao zap" href="${C.esc(zap)}" target="_blank" rel="noopener">Consultar no WhatsApp</a>` : ''}
+          <button class="botao" type="button" id="compartilhar">Compartilhar</button>
+        </div>
+      </div>`;
+    desenharFoto();
+    $('modal').hidden = false; document.body.style.overflow = 'hidden';
+    $('folha').scrollTop = 0;
+    $('fechar').focus();
+    $('fechar').onclick = () => fechar(true);
+    $('compartilhar').onclick = async () => {
+      const dados = { title: p.nome, text: `${p.nome} (${p.codigo})`, url: link };
+      try {
+        if (navigator.share) { await navigator.share(dados); return; }
+        await navigator.clipboard.writeText(link); toast('Link copiado');
+      } catch (e) { if (e && e.name !== 'AbortError') { prompt('Copie o link:', link); } }
+    };
+    if (empurrar) history.pushState({ p: p.id }, '', '#p=' + encodeURIComponent(p.id));
+  }
+
+  function desenharFoto() {
+    const fs = atual._fotos;
+    const g = $('galeria');
+    if (!fs.length) { g.innerHTML = '<div class="sem-foto" style="color:#bbb">Sem foto</div>'; $('minis').hidden = true; return; }
+    g.innerHTML = `<img src="${C.esc(C.urlFoto(cliente, fs[fotoIdx].g))}" alt="${C.esc(atual.nome)} — foto ${fotoIdx + 1}">` +
+      (fs.length > 1 ? `<button class="seta esq" type="button" aria-label="Foto anterior">‹</button><button class="seta dir" type="button" aria-label="Próxima foto">›</button><span class="pos">${fotoIdx + 1}/${fs.length}</span>` : '');
+    $('minis').hidden = fs.length < 2;
+    $('minis').innerHTML = fs.map((f, i) => `<button type="button" data-i="${i}" aria-current="${i === fotoIdx}" aria-label="Foto ${i + 1}"><img src="${C.esc(C.urlFoto(cliente, f.p))}" alt=""></button>`).join('');
+  }
+  function mudarFoto(d) { const n = atual._fotos.length; if (n < 2) return; fotoIdx = (fotoIdx + d + n) % n; desenharFoto(); }
+
+  function fechar(voltar) {
+    if ($('modal').hidden) return;
+    $('modal').hidden = true; document.body.style.overflow = ''; atual = null;
+    if (focoAntes && focoAntes.focus) focoAntes.focus();
+    if (voltar && /#p=/.test(location.hash)) {
+      if (history.state && history.state.p) history.back();
+      else history.replaceState(null, '', location.pathname + location.search);
+    }
+  }
+  function abrirPeloEndereco() {
+    const m = location.hash.match(/#p=([^&]+)/);
+    if (m) abrir(decodeURIComponent(m[1]), false); else fechar(false);
+  }
+
+  let toastT;
+  function toast(t) {
+    let el = document.querySelector('.toast');
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), 2200);
+  }
+
+  /* ---------- eventos ---------- */
+  let tBusca;
+  $('busca').addEventListener('input', () => { clearTimeout(tBusca); tBusca = setTimeout(desenhar, 120); });
+  ['f-acabamento', 'f-cor', 'f-status', 'f-ordem'].forEach((id) => $(id).addEventListener('change', desenhar));
+  $('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    tipoAtivo = b.dataset.tipo;
+    [...$('chips').children].forEach((c) => c.setAttribute('aria-pressed', c === b));
+    desenhar();
+  });
+  $('grade').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) abrir(c.dataset.id, true); });
+  $('modal').addEventListener('click', (e) => {
+    if (e.target === $('modal')) return fechar(true);
+    if (e.target.closest('.seta.esq')) mudarFoto(-1);
+    else if (e.target.closest('.seta.dir')) mudarFoto(1);
+    const mb = e.target.closest('#minis button'); if (mb) { fotoIdx = Number(mb.dataset.i); desenharFoto(); }
+  });
+  let x0 = null;
+  $('modal').addEventListener('touchstart', (e) => { if (e.target.closest('#galeria')) x0 = e.touches[0].clientX; }, { passive: true });
+  $('modal').addEventListener('touchend', (e) => {
+    if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 40) mudarFoto(dx < 0 ? 1 : -1);
+  });
+  document.addEventListener('keydown', (e) => {
+    if ($('modal').hidden) return;
+    if (e.key === 'Escape') fechar(true);
+    else if (e.key === 'ArrowLeft') mudarFoto(-1);
+    else if (e.key === 'ArrowRight') mudarFoto(1);
+  });
+  window.addEventListener('popstate', abrirPeloEndereco);
+
+  carregar();
+})();
+</script>
+</body>
+</html>

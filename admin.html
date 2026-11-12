@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel · Catálogo</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f6f3ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Painel">
+<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/estilo.css">
+<style>
+  .painel { max-width: 760px; margin: 0 auto; padding: 16px 16px 120px; }
+  .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .cabeca h1 { font: 600 28px/1.1 var(--serif); margin: 0; }
+  .cabeca .sub { color: var(--texto-2); font-size: 13px; }
+  .caixa { background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); padding: 14px 16px; margin-bottom: 14px; }
+  .caixa h2 { font: 600 21px var(--serif); margin: 0 0 10px; }
+  .linha-flag { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .linha-flag p { margin: 2px 0 0; color: var(--texto-2); font-size: 13.5px; }
+  .chave { position: relative; flex: 0 0 auto; width: 54px; height: 32px; }
+  .chave input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .chave span { position: absolute; inset: 0; border-radius: 999px; background: var(--linha); transition: background .2s; pointer-events: none; }
+  .chave span::after { content: ''; position: absolute; left: 3px; top: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+  .chave input:checked + span { background: var(--ok); }
+  .chave input:checked + span::after { transform: translateX(22px); }
+  .chave input:focus-visible + span { outline: 2px solid var(--acento); outline-offset: 2px; }
+  details.caixa summary { font-weight: 600; cursor: pointer; list-style: none; }
+  details.caixa summary::-webkit-details-marker { display: none; }
+  details.caixa summary::after { content: '▾'; float: right; color: var(--texto-2); }
+  details[open].caixa summary::after { content: '▴'; }
+
+  .campo { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; min-width: 0; }
+  .campo > span { font-size: 13.5px; font-weight: 600; }
+  .campo > span em { color: var(--fim); font-style: normal; }
+  .campo small { color: var(--texto-2); font-size: 12.5px; }
+  .campo input[type=text], .campo input[type=email], .campo input[type=password], .campo input[type=tel], .campo input[type=search], .campo select, .campo textarea {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--linha); background: var(--superficie); font-size: 16px; min-height: 46px; }
+  .campo textarea { min-height: 90px; resize: vertical; }
+  .campo.invalido input, .campo.invalido select { border-color: var(--fim); background: var(--fim-bg); }
+  .campo .erro-campo { color: var(--fim); font-size: 12.5px; font-weight: 600; }
+  .duas { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 12px; }
+  .tres { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0 10px; }
+  .calc { background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin: -2px 0 12px; }
+  .calc strong { font-size: 15px; }
+  .marcar { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 15px; }
+  .marcar input { width: 22px; height: 22px; accent-color: var(--acento); flex: 0 0 auto; }
+  .opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opcoes label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--linha); border-radius: 999px; padding: 7px 12px; font-size: 14px; background: var(--superficie); cursor: pointer; }
+  .opcoes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opcoes label:has(input:checked) { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
+  .opcoes label:has(input:focus-visible) { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+  .lista { display: flex; flex-direction: column; gap: 8px; }
+  .item { display: flex; align-items: center; gap: 12px; background: var(--superficie); border-radius: 12px; padding: 8px; box-shadow: var(--sombra); border: 0; text-align: left; width: 100%; }
+  .item .mini { flex: 0 0 64px; height: 64px; border-radius: 9px; overflow: hidden; background: var(--superficie-2); }
+  .item .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .item .txt { flex: 1; min-width: 0; }
+  .item .txt b { display: block; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .txt span { display: block; font-size: 12.5px; color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .lado { text-align: right; font-size: 13px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .item.rascunho { opacity: .65; }
+  .barra-busca { display: flex; gap: 8px; margin-bottom: 10px; }
+  .barra-busca .campo { flex: 1; margin: 0; }
+  .barra-busca select { max-width: 150px; }
+
+  .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 30; border-radius: 999px; padding: 14px 22px; box-shadow: 0 6px 20px rgba(0,0,0,.22); }
+
+  .fotos { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+  .foto-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--superficie-2); }
+  .foto-item img { width: 100%; height: 100%; object-fit: cover; }
+  .foto-item .principal { position: absolute; left: 6px; top: 6px; background: var(--acento); color: var(--acento-texto); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+  .foto-item .bts { position: absolute; inset: auto 0 0 0; display: flex; justify-content: space-between; padding: 5px; background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+  .foto-item .bts button { border: 0; border-radius: 50%; background: rgba(255,255,255,.94); color: #222; font-size: 16px; font-weight: 700; width: 34px; height: 34px; line-height: 1; padding: 0; }
+  .foto-item .bts button.rm { color: #9b2f2f; }
+  .foto-item.enviando { display: grid; place-items: center; font-size: 12px; color: var(--texto-2); }
+  .add-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .add-fotos label { cursor: pointer; }
+  .add-fotos input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+  .rodape-form { position: sticky; bottom: 0; background: color-mix(in srgb, var(--fundo) 94%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; border-top: 1px solid var(--linha); margin-top: 6px; z-index: 5; }
+  .rodape-form .botao { flex: 1; }
+  .extra { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .login { max-width: 400px; margin: 8vh auto 0; padding: 0 16px; }
+  .login h1 { font: 600 34px/1.1 var(--serif); margin: 0 0 6px; }
+  .login p { color: var(--texto-2); margin: 0 0 18px; }
+  .dica { background: var(--aviso-bg); color: var(--aviso); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 14px; }
+  .msg-erro { background: var(--fim-bg); color: var(--fim); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; font-weight: 500; }
+  @media (max-width: 380px) { .tres { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section id="tela-login" class="login" hidden>
+  <h1>Painel do catálogo</h1>
+  <p>Entre para cadastrar e editar as pedras.</p>
+  <div class="dica" id="dica-demo" hidden></div>
+  <div class="msg-erro" id="erro-login" hidden role="alert"></div>
+  <form id="form-login" novalidate>
+    <label class="campo"><span>E-mail</span><input type="email" id="l-email" autocomplete="username" inputmode="email" required></label>
+    <label class="campo"><span>Senha</span><input type="password" id="l-senha" autocomplete="current-password" required></label>
+    <button class="botao primario cheio" id="b-entrar" type="submit">Entrar</button>
+  </form>
+  <p style="margin-top:22px;text-align:center"><a class="link" href="./">Ver o catálogo</a></p>
+</section>
+
+<!-- ============ LISTA ============ -->
+<section id="tela-lista" class="painel" hidden>
+  <div class="cabeca">
+    <div><h1>Pedras</h1><div class="sub" id="quem"></div></div>
+    <div style="display:flex;gap:6px"><a class="botao pequeno" href="./" target="_blank" rel="noopener">Ver site</a><button class="botao pequeno" id="b-sair" type="button">Sair</button></div>
+  </div>
+
+  <div class="caixa linha-flag">
+    <div><strong>Mostrar preços no site</strong><p id="txt-flag">Todos que abrirem o catálogo veem o valor por m².</p></div>
+    <label class="chave"><input type="checkbox" id="flag-preco" aria-label="Mostrar preços no site"><span></span></label>
+  </div>
+
+  <details class="caixa" id="caixa-empresa">
+    <summary>Dados da empresa</summary>
+    <div style="margin-top:12px">
+      <label class="campo"><span>Nome que aparece no topo do site</span><input type="text" id="c-nome" maxlength="80"></label>
+      <label class="campo"><span>WhatsApp para os clientes chamarem</span><input type="tel" id="c-zap" placeholder="(19) 99999-9999" inputmode="tel"><small>Deixe vazio para esconder o botão de WhatsApp.</small></label>
+      <button class="botao primario" id="b-salvar-empresa" type="button">Salvar dados</button>
+    </div>
+  </details>
+
+  <div class="barra-busca">
+    <label class="campo"><span class="oculto-leitor">Buscar</span><input type="search" id="busca" placeholder="Buscar nome, código ou lote"></label>
+    <select id="f-status" aria-label="Filtrar" style="margin:0;padding:0 10px;border-radius:10px;border:1px solid var(--linha);background:var(--superficie)">
+      <option value="">Todas</option><option value="disponivel">Disponíveis</option><option value="reservado">Reservadas</option>
+      <option value="sob_consulta">Sob consulta</option><option value="esgotado">Esgotadas</option><option value="rascunho">Fora do site</option>
+    </select>
+  </div>
+  <p class="contagem" id="contagem"></p>
+  <div class="lista" id="lista"><div class="carregando">Carregando…</div></div>
+  <button class="botao primario fab" id="b-novo" type="button">+ Nova pedra</button>
+</section>
+
+<!-- ============ FORMULÁRIO ============ -->
+<section id="tela-form" class="painel" hidden>
+  <div class="cabeca">
+    <h1 id="titulo-form">Nova pedra</h1>
+    <button class="botao pequeno" id="b-voltar" type="button">Cancelar</button>
+  </div>
+  <div class="msg-erro" id="erro-form" hidden role="alert"></div>
+  <form id="form" novalidate autocomplete="off">
+    <div class="caixa">
+      <h2>Fotos</h2>
+      <div class="fotos" id="fotos"></div>
+      <div class="add-fotos">
+        <label class="botao"><input type="file" id="in-camera" accept="image/*" capture="environment">📷 Tirar foto</label>
+        <label class="botao"><input type="file" id="in-galeria" accept="image/*" multiple>🖼️ Da galeria</label>
+      </div>
+      <p class="contagem" style="margin:8px 0 0">A primeira foto é a que aparece no catálogo.</p>
+    </div>
+
+    <div class="caixa">
+      <h2>Identificação</h2>
+      <label class="campo" data-campo="nome"><span>Nome <em>*</em></span><input type="text" name="nome" maxlength="120" placeholder="Ex.: Branco Carrara" autocapitalize="words"></label>
+      <div class="duas">
+        <label class="campo" data-campo="codigo"><span>Código <em>*</em></span><input type="text" name="codigo" maxlength="40" placeholder="Ex.: MAR-001" autocapitalize="characters"></label>
+        <label class="campo" data-campo="lote"><span>Lote</span><input type="text" name="lote" maxlength="40" placeholder="Ex.: L-2611" autocapitalize="characters"></label>
+      </div>
+      <div class="duas">
+        <label class="campo"><span>Tipo de pedra</span><select name="tipo"><option value="">—</option></select></label>
+        <label class="campo"><span>Cor</span><input type="text" name="cor" list="lista-cores" maxlength="40" placeholder="Ex.: Branco"></label>
+      </div>
+      <label class="campo"><span>Origem</span><input type="text" name="origem" list="lista-origens" maxlength="60" placeholder="Ex.: Nacional (ES) ou Importado (Itália)"></label>
+    </div>
+
+    <div class="caixa">
+      <h2>Chapa e estoque</h2>
+      <div class="tres">
+        <label class="campo" data-campo="espessura_cm"><span>Espessura</span><select name="espessura_sel"></select></label>
+        <label class="campo" data-campo="comprimento_cm"><span>Comprim. (cm)</span><input type="text" name="comprimento_cm" inputmode="decimal" placeholder="290"></label>
+        <label class="campo" data-campo="altura_cm"><span>Altura (cm)</span><input type="text" name="altura_cm" inputmode="decimal" placeholder="175"></label>
+      </div>
+      <label class="campo" data-campo="espessura_outra" hidden id="campo-esp-outra"><span>Espessura (cm)</span><input type="text" name="espessura_outra" inputmode="decimal" placeholder="Ex.: 1,5"></label>
+      <div class="duas">
+        <label class="campo" data-campo="qtd_chapas"><span>Chapas no lote</span><input type="text" name="qtd_chapas" inputmode="numeric" placeholder="Ex.: 12"></label>
+        <label class="campo"><span>Situação</span><select name="status"></select></label>
+      </div>
+      <div class="calc" id="calc">Preencha comprimento e altura para calcular os m².</div>
+      <label class="campo"><span>Acabamento</span><select name="acabamento"><option value="">—</option></select></label>
+    </div>
+
+    <div class="caixa">
+      <h2>Preço</h2>
+      <label class="campo" data-campo="preco_m2"><span>Valor por m² (R$)</span><input type="text" name="preco_m2" inputmode="decimal" placeholder="Ex.: 890,00"></label>
+      <label class="marcar"><input type="checkbox" name="mostrar_preco" checked> Mostrar o preço desta pedra no site</label>
+      <p class="contagem" id="aviso-flag-global" hidden style="margin:4px 0 0;color:var(--aviso)">Atenção: os preços estão desligados para o site inteiro (chave na tela inicial do painel).</p>
+    </div>
+
+    <div class="caixa">
+      <h2>Indicado para</h2>
+      <div class="opcoes" id="aplicacoes"></div>
+    </div>
+
+    <div class="caixa">
+      <h2>Observações</h2>
+      <label class="campo"><span class="oculto-leitor">Observações</span><textarea name="observacoes" maxlength="1000" placeholder="Ex.: veios marcantes, ideal fazer bookmatch, chapas com pequenas fissuras na borda…"></textarea></label>
+      <label class="marcar"><input type="checkbox" name="publicado" checked> Aparecer no site</label>
+    </div>
+
+    <div class="extra" id="extra" hidden>
+      <button class="botao" type="button" id="b-duplicar">Cadastrar novo lote desta pedra</button>
+      <button class="botao perigo" type="button" id="b-excluir">Excluir pedra</button>
+    </div>
+
+    <div class="rodape-form">
+      <button class="botao" type="button" id="b-cancelar">Cancelar</button>
+      <button class="botao primario" type="submit" id="b-salvar">Salvar</button>
+    </div>
+  </form>
+</section>
+
+<datalist id="lista-cores">
+  <option>Branco</option><option>Preto</option><option>Cinza</option><option>Bege</option><option>Marrom</option>
+  <option>Verde</option><option>Azul</option><option>Rosa</option><option>Amarelo</option><option>Vermelho</option><option>Dourado</option>
+</datalist>
+<datalist id="lista-origens"><option>Nacional</option><option>Importado</option></datalist>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/demo.js"></script>
+<script src="assets/comum.js"></script>
+<script>
+(function () {
+  'use strict';
+  const C = window.Catalogo;
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  const campo = (n) => form.elements[n];
+  C.avisoDemo();
+
+  let cliente, produtos = [], config = {}, editando = null, fotos = [], novasEnviadas = [], removidas = [], sujo = false, enviando = 0;
+
+  /* ---------- mensagens ---------- */
+  function traduzir(e) {
+    const m = String((e && (e.message || e.error_description)) || e || '');
+    if (/Invalid login/i.test(m)) return 'E-mail ou senha incorretos.';
+    if (/Email not confirmed/i.test(m)) return 'Este e-mail ainda não foi confirmado.';
+    if ((e && e.code === '23505') || /duplicate key|unique/i.test(m)) return 'Já existe uma pedra com esse código nesse mesmo lote.';
+    if ((e && e.code === '42501') || /row-level security|permission denied|PGRST116/i.test(m)) return 'Seu usuário não tem permissão para alterar. Peça para incluir seu e-mail como administrador.';
+    if (/Failed to fetch|NetworkError|Load failed|network/i.test(m)) return 'Sem conexão com a internet. Verifique e tente de novo.';
+    if (/JWT|expired/i.test(m)) return 'Sua sessão expirou. Saia e entre de novo.';
+    return m || 'Algo deu errado. Tente de novo.';
+  }
+  let toastT;
+  function toast(t, ehErro) {
+    let el = document.querySelector('.toast');
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = t; el.classList.toggle('erro', !!ehErro); el.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), ehErro ? 4500 : 2600);
+  }
+  const mostrar = (tela) => ['tela-login', 'tela-lista', 'tela-form'].forEach((id) => ($(id).hidden = id !== tela));
+
+  /* ---------- login ---------- */
+  async function iniciar() {
+    try { cliente = C.criarCliente(); } catch (e) { mostrar('tela-login'); $('erro-login').hidden = false; $('erro-login').textContent = e.message; return; }
+    if (C.MODO_DEMO) {
+      $('dica-demo').hidden = false;
+      $('dica-demo').innerHTML = `Modo demonstração: entre com <b>${window.DemoSupabase.EMAIL_DEMO}</b> e senha <b>${window.DemoSupabase.SENHA_DEMO}</b>.`;
+    }
+    const { data } = await cliente.auth.getSession();
+    if (data && data.session) await entrou(data.session); else mostrar('tela-login');
+  }
+
+  $('form-login').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const email = $('l-email').value.trim(), senha = $('l-senha').value;
+    $('erro-login').hidden = true;
+    if (!email || !senha) { $('erro-login').hidden = false; $('erro-login').textContent = 'Preencha e-mail e senha.'; return; }
+    $('b-entrar').disabled = true; $('b-entrar').textContent = 'Entrando…';
+    try {
+      const { data, error } = await cliente.auth.signInWithPassword({ email, password: senha });
+      if (error) throw error;
+      await entrou(data.session);
+    } catch (e) {
+      $('erro-login').hidden = false; $('erro-login').textContent = traduzir(e);
+    } finally { $('b-entrar').disabled = false; $('b-entrar').textContent = 'Entrar'; }
+  });
+
+  async function entrou(sessao) {
+    const { data: admin, error } = await cliente.rpc('is_admin');
+    if (error || !admin) {
+      await cliente.auth.signOut();
+      mostrar('tela-login');
+      $('erro-login').hidden = false;
+      $('erro-login').textContent = error ? traduzir(error) : 'Este e-mail entrou, mas não está autorizado a editar o catálogo.';
+      return;
+    }
+    $('quem').textContent = sessao.user.email;
+    $('l-senha').value = '';
+    mostrar('tela-lista');
+    await carregar();
+  }
+
+  $('b-sair').onclick = async () => { await cliente.auth.signOut(); produtos = []; mostrar('tela-login'); };
+
+  /* ---------- lista ---------- */
+  async function carregar() {
+    $('lista').innerHTML = '<div class="carregando">Carregando…</div>';
+    const [rc, rp] = await Promise.all([
+      cliente.from('configuracoes').select('*').eq('id', 1).maybeSingle(),
+      cliente.from('produtos').select('*').order('nome', { ascending: true })
+    ]);
+    if (rp.error || rc.error) {
+      $('lista').innerHTML = `<div class="msg-erro">${C.esc(traduzir(rp.error || rc.error))}</div>`; return;
+    }
+    config = rc.data || { mostrar_preco: true };
+    produtos = rp.data || [];
+    $('flag-preco').checked = !!config.mostrar_preco; textoFlag();
+    $('c-nome').value = config.nome_empresa || '';
+    $('c-zap').value = config.whatsapp || '';
+    desenharLista();
+  }
+
+  function desenharLista() {
+    const termos = C.semAcento($('busca').value).split(/\s+/).filter(Boolean);
+    const st = $('f-status').value;
+    const lista = produtos.filter((p) => {
+      const txt = C.semAcento([p.nome, p.codigo, p.lote, p.cor, p.tipo].join(' '));
+      const okSt = !st || (st === 'rascunho' ? !p.publicado : p.status === st);
+      return okSt && termos.every((t) => txt.includes(t));
+    });
+    $('contagem').textContent = produtos.length ? `${lista.length} de ${produtos.length} pedras` : '';
+    if (!produtos.length) { $('lista').innerHTML = '<div class="vazio"><strong>Nenhuma pedra ainda</strong>Toque em “+ Nova pedra” para cadastrar a primeira.</div>'; return; }
+    if (!lista.length) { $('lista').innerHTML = '<div class="vazio">Nada encontrado com esse filtro.</div>'; return; }
+    $('lista').innerHTML = lista.map((p) => {
+      const f = C.normalizarFotos(p.fotos)[0];
+      return `<button class="item ${p.publicado ? '' : 'rascunho'}" type="button" data-id="${C.esc(p.id)}">
+        <div class="mini">${f ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="" loading="lazy">` : ''}</div>
+        <div class="txt"><b>${C.esc(p.nome)}</b><span>${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : ''].filter(Boolean).join(' · '))}</span>
+          <span>${p.preco_m2 != null ? C.esc(C.fmtBRL(p.preco_m2)) + '/m²' : 'Sem preço'}${p.publicado ? '' : ' · fora do site'}</span></div>
+        <div class="lado">${C.badgeStatus(p.status)}</div></button>`;
+    }).join('');
+  }
+  $('busca').addEventListener('input', desenharLista);
+  $('f-status').addEventListener('change', desenharLista);
+  $('lista').addEventListener('click', (e) => { const b = e.target.closest('.item'); if (b) abrirForm(produtos.find((p) => String(p.id) === b.dataset.id)); });
+  $('b-novo').onclick = () => abrirForm(null);
+
+  /* ---------- flag global de preço ---------- */
+  function textoFlag() {
+    $('txt-flag').textContent = $('flag-preco').checked
+      ? 'Todos que abrirem o catálogo veem o valor por m².'
+      : 'Preços escondidos: o site mostra “Valor sob consulta”.';
+  }
+  $('flag-preco').addEventListener('change', async () => {
+    const valor = $('flag-preco').checked;
+    $('flag-preco').disabled = true;
+    const { data, error } = await cliente.from('configuracoes').update({ mostrar_preco: valor }).eq('id', 1).select().single();
+    $('flag-preco').disabled = false;
+    if (error) { $('flag-preco').checked = !valor; toast(traduzir(error), true); }
+    else { config = data; toast(valor ? 'Preços visíveis no site' : 'Preços escondidos do site'); }
+    textoFlag();
+  });
+
+  $('b-salvar-empresa').onclick = async () => {
+    const zap = $('c-zap').value.replace(/\D/g, '');
+    const zapFinal = zap ? (zap.length <= 11 ? '55' + zap : zap) : null;
+    if (zap && (zapFinal.length < 12 || zapFinal.length > 13)) { toast('WhatsApp inválido. Use DDD + número.', true); return; }
+    const { data, error } = await cliente.from('configuracoes')
+      .update({ nome_empresa: $('c-nome').value.trim() || 'Catálogo de Mármores', whatsapp: zapFinal }).eq('id', 1).select().single();
+    if (error) return toast(traduzir(error), true);
+    config = data; $('c-zap').value = data.whatsapp || ''; toast('Dados salvos');
+  };
+
+  /* ---------- formulário ---------- */
+  function preencherSelects() {
+    form.elements.tipo.innerHTML = '<option value="">—</option>' + C.TIPOS.map((t) => `<option>${C.esc(t)}</option>`).join('');
+    form.elements.acabamento.innerHTML = '<option value="">—</option>' + C.ACABAMENTOS.map((t) => `<option>${C.esc(t)}</option>`).join('');
+    form.elements.status.innerHTML = Object.entries(C.STATUS).map(([k, v]) => `<option value="${k}">${v.rotulo}</option>`).join('');
+    form.elements.espessura_sel.innerHTML = '<option value="">—</option>' + C.ESPESSURAS.map((e) => `<option value="${e}">${e} cm</option>`).join('') + '<option value="outra">Outra…</option>';
+    $('aplicacoes').innerHTML = C.APLICACOES.map((a) => `<label><input type="checkbox" name="aplicacoes" value="${C.esc(a)}">${C.esc(a)}</label>`).join('');
+  }
+  preencherSelects();
+
+  const garantirOpcao = (sel, valor) => {
+    if (valor && ![...sel.options].some((o) => o.value === valor)) sel.add(new Option(valor, valor));
+    sel.value = valor || '';
+  };
+  const novoId = () => (crypto.randomUUID ? crypto.randomUUID() :
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+
+  function abrirForm(p, base) {
+    form.reset(); limparErros(); $('erro-form').hidden = true;
+    editando = p ? p.id : null;
+    const d = p || base || {};
+    $('titulo-form').textContent = p ? 'Editar pedra' : (base ? 'Novo lote' : 'Nova pedra');
+    $('extra').hidden = !p;
+    ['nome', 'codigo', 'lote', 'cor', 'origem', 'observacoes'].forEach((k) => (campo(k).value = d[k] || ''));
+    garantirOpcao(campo('tipo'), d.tipo); garantirOpcao(campo('acabamento'), d.acabamento);
+    campo('status').value = d.status || 'disponivel';
+    const esp = d.espessura_cm != null ? Number(d.espessura_cm) : null;
+    if (esp == null) campo('espessura_sel').value = '';
+    else if (C.ESPESSURAS.includes(esp)) campo('espessura_sel').value = String(esp);
+    else { campo('espessura_sel').value = 'outra'; campo('espessura_outra').value = C.fmtNum(esp); }
+    $('campo-esp-outra').hidden = campo('espessura_sel').value !== 'outra';
+    campo('comprimento_cm').value = d.comprimento_cm != null ? C.fmtNum(d.comprimento_cm) : '';
+    campo('altura_cm').value = d.altura_cm != null ? C.fmtNum(d.altura_cm) : '';
+    campo('qtd_chapas').value = d.qtd_chapas != null ? String(d.qtd_chapas) : '';
+    campo('preco_m2').value = d.preco_m2 != null ? Number(d.preco_m2).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    campo('mostrar_preco').checked = d.mostrar_preco !== false;
+    campo('publicado').checked = d.publicado !== false;
+    const apl = d.aplicacoes || [];
+    form.querySelectorAll('input[name=aplicacoes]').forEach((c) => (c.checked = apl.includes(c.value)));
+    fotos = p ? C.normalizarFotos(p.fotos) : [];
+    form.dataset.id = p ? p.id : novoId();
+    novasEnviadas = []; removidas = []; sujo = false;
+    $('aviso-flag-global').hidden = config.mostrar_preco !== false;
+    desenharFotos(); calcular();
+    mostrar('tela-form'); window.scrollTo(0, 0);
+    if (!p) setTimeout(() => campo('nome').focus({ preventScroll: true }), 50);
+  }
+
+  function calcular() {
+    const c = C.lerNumero(campo('comprimento_cm').value), a = C.lerNumero(campo('altura_cm').value), q = C.lerNumero(campo('qtd_chapas').value);
+    const ar = C.areas({ comprimento_cm: c, altura_cm: a, qtd_chapas: q });
+    const preco = C.lerNumero(campo('preco_m2').value);
+    if (!ar.chapa) { $('calc').textContent = 'Preencha comprimento e altura para calcular os m².'; return; }
+    let t = `Cada chapa: <strong>${C.fmtNum(ar.chapa)} m²</strong>`;
+    if (ar.total) t += ` · Lote: <strong>${C.fmtNum(ar.total)} m²</strong>`;
+    if (preco > 0) t += `<br>Valor por chapa: <strong>${C.fmtBRL(ar.chapa * preco)}</strong>`;
+    $('calc').innerHTML = t;
+  }
+  form.addEventListener('input', (e) => { sujo = true; if (/comprimento|altura|qtd|preco/.test(e.target.name)) calcular(); limparErro(e.target); });
+  form.addEventListener('change', (e) => {
+    sujo = true;
+    if (e.target.name === 'espessura_sel') {
+      $('campo-esp-outra').hidden = e.target.value !== 'outra';
+      if (e.target.value === 'outra') campo('espessura_outra').focus();
+    }
+  });
+
+  /* ---------- fotos ---------- */
+  function desenharFotos() {
+    const blocos = fotos.map((f, i) => `<div class="foto-item">
+        <img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="Foto ${i + 1}">
+        ${i === 0 ? '<span class="principal">Principal</span>' : ''}
+        <div class="bts">${i > 0 ? `<button type="button" data-acao="principal" data-i="${i}" aria-label="Tornar foto ${i + 1} a principal" title="Tornar principal">★</button>` : '<span></span>'}
+          <button type="button" class="rm" data-acao="remover" data-i="${i}" aria-label="Remover foto ${i + 1}" title="Remover">✕</button></div></div>`);
+    for (let i = 0; i < enviando; i++) blocos.push('<div class="foto-item enviando">Enviando…</div>');
+    $('fotos').innerHTML = blocos.join('');
+    $('fotos').hidden = !blocos.length;
+  }
+  $('fotos').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-acao]'); if (!b) return;
+    const i = Number(b.dataset.i);
+    if (b.dataset.acao === 'principal') { fotos.unshift(fotos.splice(i, 1)[0]); }
+    else {
+      if (!confirm('Remover esta foto?')) return;
+      const [f] = fotos.splice(i, 1);
+      if (novasEnviadas.includes(f)) { apagarArquivos([f]); novasEnviadas = novasEnviadas.filter((x) => x !== f); }
+      else removidas.push(f);
+    }
+    sujo = true; desenharFotos();
+  });
+
+  async function enviarFotos(lista) {
+    const arquivos = [...lista].filter((a) => /^image\//.test(a.type) || /\.(heic|heif|jpe?g|png|webp)$/i.test(a.name));
+    if (!arquivos.length) return;
+    if (fotos.length + arquivos.length > 12) { toast('Máximo de 12 fotos por pedra.', true); return; }
+    enviando += arquivos.length; desenharFotos(); sujo = true;
+    const id = form.dataset.id;
+    for (const arq of arquivos) {
+      try {
+        const [g, p] = await Promise.all([C.comprimirImagem(arq, 1600, 0.82), C.comprimirImagem(arq, 480, 0.72)]);
+        const base = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const op = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
+        const r1 = await cliente.storage.from('fotos').upload(base + '.jpg', g, op);
+        if (r1.error) throw r1.error;
+        const r2 = await cliente.storage.from('fotos').upload(base + '_p.jpg', p, op);
+        if (r2.error) { await cliente.storage.from('fotos').remove([base + '.jpg']); throw r2.error; }
+        const f = { g: base + '.jpg', p: base + '_p.jpg' };
+        fotos.push(f); novasEnviadas.push(f);
+      } catch (e) {
+        console.error(e); toast('Falha ao enviar foto: ' + traduzir(e), true);
+      } finally { enviando--; desenharFotos(); }
+    }
+  }
+  ['in-camera', 'in-galeria'].forEach((id) => $(id).addEventListener('change', (e) => { enviarFotos(e.target.files); e.target.value = ''; }));
+
+  async function apagarArquivos(lista) {
+    const caminhos = [...new Set(lista.flatMap((f) => [f.g, f.p]).filter((c) => c && !/^(data:|blob:|https?:)/.test(c)))];
+    if (!caminhos.length) return;
+    try { await cliente.storage.from('fotos').remove(caminhos); } catch (e) { console.warn('não apagou arquivos', e); }
+  }
+
+  /* ---------- validação ---------- */
+  function limparErro(el) { const c = el.closest('.campo'); if (c) { c.classList.remove('invalido'); const m = c.querySelector('.erro-campo'); if (m) m.remove(); } }
+  function limparErros() { form.querySelectorAll('.campo.invalido').forEach((c) => limparErro(c.querySelector('input,select') || c)); }
+  function marcarErro(nome, msg) {
+    const el = campo(nome); const c = el.closest('.campo');
+    c.classList.add('invalido');
+    if (!c.querySelector('.erro-campo')) { const s = document.createElement('small'); s.className = 'erro-campo'; s.textContent = msg; c.appendChild(s); }
+    return el;
+  }
+
+  function lerFormulario() {
+    limparErros();
+    const erros = [];
+    const txt = (n) => campo(n).value.trim() || null;
+    const num = (n, opc) => {
+      const v = C.lerNumero(campo(n).value);
+      if (v === null) return null;
+      if (isNaN(v) || v < 0 || (opc.positivo && v === 0) || (opc.inteiro && !Number.isInteger(v)) || (opc.max && v > opc.max)) {
+        erros.push(marcarErro(n, opc.msg)); return null;
+      }
+      return v;
+    };
+    const d = {
+      nome: txt('nome'), codigo: txt('codigo') && txt('codigo').toUpperCase(), lote: txt('lote') && txt('lote').toUpperCase(),
+      tipo: txt('tipo'), cor: txt('cor'), origem: txt('origem'), acabamento: txt('acabamento'),
+      status: campo('status').value, observacoes: txt('observacoes'),
+      mostrar_preco: campo('mostrar_preco').checked, publicado: campo('publicado').checked,
+      aplicacoes: [...form.querySelectorAll('input[name=aplicacoes]:checked')].map((c) => c.value),
+      comprimento_cm: num('comprimento_cm', { positivo: true, max: 2000, msg: 'Medida inválida (em cm).' }),
+      altura_cm: num('altura_cm', { positivo: true, max: 2000, msg: 'Medida inválida (em cm).' }),
+      qtd_chapas: num('qtd_chapas', { inteiro: true, max: 100000, msg: 'Use um número inteiro.' }),
+      preco_m2: num('preco_m2', { max: 9999999, msg: 'Valor inválido. Ex.: 890,00' })
+    };
+    const sel = campo('espessura_sel').value;
+    d.espessura_cm = sel === 'outra' ? num('espessura_outra', { positivo: true, max: 50, msg: 'Espessura inválida.' }) : (sel ? Number(sel) : null);
+    if (!d.nome) erros.unshift(marcarErro('nome', 'Informe o nome.'));
+    if (!d.codigo) erros.splice(d.nome ? 0 : 1, 0, marcarErro('codigo', 'Informe o código.'));
+    d.fotos = fotos.map((f) => ({ g: f.g, p: f.p }));
+    return { d, erros };
+  }
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (enviando) { toast('Aguarde as fotos terminarem de enviar.', true); return; }
+    const { d, erros } = lerFormulario();
+    $('erro-form').hidden = true;
+    if (erros.length) { erros[0].focus(); erros[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); toast('Confira os campos marcados.', true); return; }
+    $('b-salvar').disabled = true; $('b-salvar').textContent = 'Salvando…';
+    try {
+      const q = editando
+        ? cliente.from('produtos').update(d).eq('id', editando).select().single()
+        : cliente.from('produtos').insert(Object.assign({ id: form.dataset.id }, d)).select().single();
+      const { data, error } = await q;
+      if (error) throw error;
+      await apagarArquivos(removidas);
+      const i = produtos.findIndex((p) => p.id === data.id);
+      if (i >= 0) produtos[i] = data; else produtos.push(data);
+      produtos.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      sujo = false; novasEnviadas = []; removidas = [];
+      mostrar('tela-lista'); desenharLista();
+      toast(data.publicado ? 'Salvo! Já está no catálogo.' : 'Salvo (fora do site).');
+    } catch (e) {
+      console.error(e);
+      $('erro-form').hidden = false; $('erro-form').textContent = traduzir(e);
+      if (/código/.test(traduzir(e))) { marcarErro('codigo', 'Código + lote já cadastrados.'); marcarErro('lote', 'Troque o lote ou o código.'); }
+      $('erro-form').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } finally { $('b-salvar').disabled = false; $('b-salvar').textContent = 'Salvar'; }
+  });
+
+  async function sairDoForm() {
+    if (enviando) { toast('Aguarde as fotos terminarem de enviar.', true); return; }
+    if (sujo && !confirm('Sair sem salvar? As alterações serão perdidas.')) return;
+    await apagarArquivos(novasEnviadas);
+    novasEnviadas = []; removidas = []; sujo = false;
+    mostrar('tela-lista'); desenharLista();
+  }
+  $('b-voltar').onclick = sairDoForm; $('b-cancelar').onclick = sairDoForm;
+
+  $('b-duplicar').onclick = async () => {
+    if (sujo && !confirm('Você tem alterações não salvas nesta pedra. Continuar mesmo assim?')) return;
+    await apagarArquivos(novasEnviadas);
+    const p = produtos.find((x) => x.id === editando);
+    const base = Object.assign({}, p, { lote: '', qtd_chapas: null, fotos: [], status: 'disponivel' });
+    abrirForm(null, base);
+    toast('Copiei os dados. Informe o novo lote e as fotos.');
+    setTimeout(() => campo('lote').focus(), 60);
+  };
+
+  $('b-excluir').onclick = async () => {
+    const p = produtos.find((x) => x.id === editando);
+    if (!p || !confirm(`Excluir “${p.nome}”${p.lote ? ' (lote ' + p.lote + ')' : ''}? Isso não pode ser desfeito.\n\nDica: para só tirar do site, desmarque “Aparecer no site”.`)) return;
+    $('b-excluir').disabled = true;
+    const { error } = await cliente.from('produtos').delete().eq('id', p.id);
+    $('b-excluir').disabled = false;
+    if (error) return toast(traduzir(error), true);
+    await apagarArquivos([...C.normalizarFotos(p.fotos), ...novasEnviadas]);
+    produtos = produtos.filter((x) => x.id !== p.id);
+    sujo = false; novasEnviadas = []; mostrar('tela-lista'); desenharLista(); toast('Pedra excluída.');
+  };
+
+  window.addEventListener('beforeunload', (e) => { if (!$('tela-form').hidden && (sujo || enviando)) { e.preventDefault(); e.returnValue = ''; } });
+
+  iniciar();
+})();
+</script>
+</body>
+</html>
