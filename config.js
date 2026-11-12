@@ -10,6 +10,6 @@
 // NUNCA coloque aqui a "service_role key".
 // =====================================================================
 window.CATALOGO_CONFIG = {
-  SUPABASE_URL: 'COLE_AQUI_A_PROJECT_URL',
-  SUPABASE_ANON_KEY: 'COLE_AQUI_A_ANON_KEY'
+  SUPABASE_URL: 'https://dztpvpnznejdglaclfbz.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_p8p_qEFKN-4ugGfWkvRm1g_XrsMLjeo'
 };
