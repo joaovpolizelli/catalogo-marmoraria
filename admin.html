@@ -183,15 +183,15 @@
       <h2>Chapa e estoque</h2>
       <div class="tres">
         <label class="campo" data-campo="espessura_cm"><span>Espessura</span><select name="espessura_sel"></select></label>
-        <label class="campo" data-campo="comprimento_cm"><span>Comprim. (cm)</span><input type="text" name="comprimento_cm" inputmode="decimal" placeholder="290"></label>
-        <label class="campo" data-campo="altura_cm"><span>Altura (cm)</span><input type="text" name="altura_cm" inputmode="decimal" placeholder="175"></label>
+        <label class="campo" data-campo="comprimento_cm"><span>Comprim. (m)</span><input type="text" name="comprimento_cm" inputmode="decimal" placeholder="3,01"></label>
+        <label class="campo" data-campo="altura_cm"><span>Altura (m)</span><input type="text" name="altura_cm" inputmode="decimal" placeholder="1,93"></label>
       </div>
       <label class="campo" data-campo="espessura_outra" hidden id="campo-esp-outra"><span>Espessura (cm)</span><input type="text" name="espessura_outra" inputmode="decimal" placeholder="Ex.: 1,5"></label>
       <div class="duas">
         <label class="campo" data-campo="qtd_chapas"><span>Chapas no lote</span><input type="text" name="qtd_chapas" inputmode="numeric" placeholder="Ex.: 12"></label>
         <label class="campo"><span>Situação</span><select name="status"></select></label>
       </div>
-      <div class="calc" id="calc">Preencha comprimento e altura para calcular os m².</div>
+      <div class="calc" id="calc">Preencha comprimento e altura (em metros) para calcular os m².</div>
       <label class="campo"><span>Acabamento</span><select name="acabamento"><option value="">—</option></select></label>
     </div>
 
@@ -409,8 +409,8 @@
     else if (C.ESPESSURAS.includes(esp)) campo('espessura_sel').value = String(esp);
     else { campo('espessura_sel').value = 'outra'; campo('espessura_outra').value = C.fmtNum(esp); }
     $('campo-esp-outra').hidden = campo('espessura_sel').value !== 'outra';
-    campo('comprimento_cm').value = d.comprimento_cm != null ? C.fmtNum(d.comprimento_cm) : '';
-    campo('altura_cm').value = d.altura_cm != null ? C.fmtNum(d.altura_cm) : '';
+    campo('comprimento_cm').value = d.comprimento_cm != null ? C.fmtNum(C.emCm(d.comprimento_cm) / 100, 3) : '';
+    campo('altura_cm').value = d.altura_cm != null ? C.fmtNum(C.emCm(d.altura_cm) / 100, 3) : '';
     campo('qtd_chapas').value = d.qtd_chapas != null ? String(d.qtd_chapas) : '';
     campo('preco_m2').value = d.preco_m2 != null ? Number(d.preco_m2).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
     campo('mostrar_preco').checked = d.mostrar_preco !== false;
@@ -428,9 +428,9 @@
 
   function calcular() {
     const c = C.lerNumero(campo('comprimento_cm').value), a = C.lerNumero(campo('altura_cm').value), q = C.lerNumero(campo('qtd_chapas').value);
-    const ar = C.areas({ comprimento_cm: c, altura_cm: a, qtd_chapas: q });
+    const ar = C.areas({ comprimento_cm: c > 0 ? c * 100 : c, altura_cm: a > 0 ? a * 100 : a, qtd_chapas: q });
     const preco = C.lerNumero(campo('preco_m2').value);
-    if (!ar.chapa) { $('calc').textContent = 'Preencha comprimento e altura para calcular os m².'; return; }
+    if (!ar.chapa) { $('calc').textContent = 'Preencha comprimento e altura (em metros) para calcular os m².'; return; }
     let t = `Cada chapa: <strong>${C.fmtNum(ar.chapa)} m²</strong>`;
     if (ar.total) t += ` · Lote: <strong>${C.fmtNum(ar.total)} m²</strong>`;
     if (preco > 0) t += `<br>Valor por chapa: <strong>${C.fmtBRL(ar.chapa * preco)}</strong>`;
@@ -521,14 +521,19 @@
       }
       return v;
     };
+    /* digitado em metros (ex.: 3,01) → guardado em cm (301) */
+    const metros = (n) => {
+      const v = num(n, { positivo: true, max: 20, msg: 'Use metros. Ex.: 3,01' });
+      return v == null ? null : Math.round(v * 10000) / 100;
+    };
     const d = {
       nome: txt('nome'), codigo: txt('codigo') && txt('codigo').toUpperCase(), lote: txt('lote') && txt('lote').toUpperCase(),
       tipo: txt('tipo'), cor: txt('cor'), origem: txt('origem'), acabamento: txt('acabamento'),
       status: campo('status').value, observacoes: txt('observacoes'),
       mostrar_preco: campo('mostrar_preco').checked, publicado: campo('publicado').checked,
       aplicacoes: [...form.querySelectorAll('input[name=aplicacoes]:checked')].map((c) => c.value),
-      comprimento_cm: num('comprimento_cm', { positivo: true, max: 2000, msg: 'Medida inválida (em cm).' }),
-      altura_cm: num('altura_cm', { positivo: true, max: 2000, msg: 'Medida inválida (em cm).' }),
+      comprimento_cm: metros('comprimento_cm'),
+      altura_cm: metros('altura_cm'),
       qtd_chapas: num('qtd_chapas', { inteiro: true, max: 100000, msg: 'Use um número inteiro.' }),
       preco_m2: num('preco_m2', { max: 9999999, msg: 'Valor inválido. Ex.: 890,00' })
     };

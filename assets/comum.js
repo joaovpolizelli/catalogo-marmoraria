@@ -47,9 +47,13 @@
     return isFinite(n) ? n : NaN;
   }
 
+  /* Medidas ficam guardadas em cm. Valor abaixo de 20 só pode ter sido digitado
+     em metros (nenhuma chapa tem menos de 20 cm), então converte. */
+  const emCm = (v) => { const n = Number(v); return n > 0 && n < 20 ? Math.round(n * 10000) / 100 : n; };
+
   /* m² de uma chapa e total do lote */
   function areas(p) {
-    const c = Number(p.comprimento_cm), a = Number(p.altura_cm);
+    const c = emCm(p.comprimento_cm), a = emCm(p.altura_cm);
     if (!(c > 0 && a > 0)) return { chapa: null, total: null };
     const chapa = (c * a) / 10000;
     const q = Number(p.qtd_chapas);
@@ -109,7 +113,7 @@
 
   window.Catalogo = {
     MODO_DEMO, TIPOS, ACABAMENTOS, APLICACOES, ESPESSURAS, STATUS,
-    criarCliente, esc, fmtBRL, fmtNum, lerNumero, areas, normalizarFotos, urlFoto,
+    criarCliente, esc, fmtBRL, fmtNum, lerNumero, areas, emCm, normalizarFotos, urlFoto,
     comprimirImagem, rotuloStatus, badgeStatus, semAcento, avisoDemo
   };
 })();

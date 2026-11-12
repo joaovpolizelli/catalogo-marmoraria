@@ -182,7 +182,7 @@
     const itens = [
       ['Código', p.codigo], ['Lote', p.lote], ['Tipo', p.tipo], ['Cor', p.cor], ['Acabamento', p.acabamento],
       ['Espessura', p.espessura_cm ? C.fmtNum(p.espessura_cm) + ' cm' : ''],
-      ['Medida da chapa', p.comprimento_cm && p.altura_cm ? `${C.fmtNum(p.comprimento_cm)} × ${C.fmtNum(p.altura_cm)} cm` : ''],
+      ['Medida da chapa', p.comprimento_cm && p.altura_cm ? `${C.fmtNum(C.emCm(p.comprimento_cm) / 100)} × ${C.fmtNum(C.emCm(p.altura_cm) / 100)} m` : ''],
       ['Área por chapa', a.chapa ? C.fmtNum(a.chapa) + ' m²' : ''],
       ['Chapas no lote', p.qtd_chapas != null && p.status !== 'esgotado' ? String(p.qtd_chapas) : ''],
       ['Total disponível', a.total && p.status !== 'esgotado' ? C.fmtNum(a.total) + ' m²' : ''],
