@@ -15,9 +15,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Advent+Pro:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/estilo.css">
 <style>
-  .painel { max-width: 760px; margin: 0 auto; padding: 16px 16px 120px; }
+  .painel { max-width: 760px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) 120px max(16px, env(safe-area-inset-left)); }
   .topo-admin { position: sticky; top: 0; z-index: 25; background: var(--marca-fundo); color: var(--marca-texto); border-bottom: 3px solid var(--acento); }
-  .topo-admin .interno { max-width: 760px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  .topo-admin .interno { max-width: 760px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 12px; }
   .topo-admin .logo { height: 36px; width: auto; flex: 0 0 auto; }
   .topo-admin .titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .topo-admin .titulo b { font: 600 20px/1.05 var(--serif); letter-spacing: .5px; color: var(--acento); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -32,8 +32,33 @@
   .barra-admin .limpar-filtros { color: var(--acento-forte); }
   .caixa { background: var(--superficie); border-radius: var(--raio); box-shadow: var(--sombra); padding: 14px 16px; margin-bottom: 14px; }
   .caixa h2 { font: 600 21px var(--serif); margin: 0 0 10px; }
-  .linha-flag { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-  .linha-flag p { margin: 2px 0 0; color: var(--texto-2); font-size: 13.5px; }
+  .lista-exibicao { display: grid; grid-template-columns: 1fr; gap: 0 18px; margin-top: 6px; }
+  @media (min-width: 640px) { .lista-exibicao { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) { .lista-exibicao { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .linha-exibe { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linha); cursor: pointer; min-width: 0; }
+  .linha-exibe > span:first-child { min-width: 0; }
+  .linha-exibe b { display: block; font-size: 15px; font-weight: 600; }
+  .linha-exibe small { display: block; color: var(--texto-2); font-size: 12.5px; }
+  .linha-exibe.desligado b { color: var(--texto-2); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--texto-2) 50%, transparent); }
+  .tag-oculto { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--aviso); background: var(--aviso-bg); padding: 1px 7px; border-radius: 999px; vertical-align: middle; }
+  /* ---------- telas grandes ---------- */
+  @media (min-width: 1000px) {
+    .painel, .topo-admin .interno { max-width: 1120px; }
+    .lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    #form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; align-items: start; }
+    #form > .caixa:first-child, #form > .extra, #form > .rodape-form { grid-column: 1 / -1; }
+    .fotos { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1400px) { .lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* ---------- celulares pequenos ---------- */
+  @media (max-width: 360px) {
+    .topo-admin .titulo small { display: none; }
+    .topo-admin .interno { gap: 8px; }
+    .topo-admin .logo { height: 24px; }
+    .topo-admin .titulo b { font-size: 16px; }
+    .topo-admin .botao.pequeno { padding: 6px 8px; font-size: 13px; min-height: 34px; }
+    .duas { grid-template-columns: 1fr; }
+  }
   .chave { position: relative; flex: 0 0 auto; width: 54px; height: 32px; }
   .chave input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
   .chave span { position: absolute; inset: 0; border-radius: 999px; background: var(--linha); transition: background .2s; pointer-events: none; }
@@ -77,7 +102,7 @@
   .item .lado { text-align: right; font-size: 13px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
   .item.rascunho { opacity: .65; }
 
-  .fab { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 30; border-radius: 999px; padding: 14px 22px; box-shadow: 0 6px 20px rgba(0,0,0,.22); }
+  .fab { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 30; border-radius: 999px; padding: 14px 22px; box-shadow: 0 6px 20px rgba(0,0,0,.22); }
 
   .fotos { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
   .foto-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--superficie-2); }
@@ -138,10 +163,11 @@
 <!-- ============ LISTA ============ -->
 <section id="tela-lista" class="painel" hidden>
 
-  <div class="caixa linha-flag">
-    <div><strong>Mostrar preços no site</strong><p id="txt-flag">Todos que abrirem o catálogo veem o valor por m².</p></div>
-    <label class="chave"><input type="checkbox" id="flag-preco" aria-label="Mostrar preços no site"><span></span></label>
-  </div>
+  <details class="caixa" id="caixa-exibicao">
+    <summary>O que aparece no site <span class="contagem" id="resumo-exibicao" style="font-weight:400"></span></summary>
+    <p class="contagem" style="margin:10px 0 0">Vale para todas as pedras. O que estiver desligado some do catálogo para vendedores e clientes. Aqui no painel você continua vendo tudo.</p>
+    <div class="lista-exibicao" id="lista-exibicao"></div>
+  </details>
 
   <details class="caixa" id="caixa-empresa">
     <summary>Dados da empresa</summary>
@@ -217,7 +243,8 @@
       <h2>Preço</h2>
       <label class="campo" data-campo="preco_m2"><span>Valor por m² (R$)</span><input type="text" name="preco_m2" inputmode="decimal" placeholder="Ex.: 890,00"></label>
       <label class="marcar"><input type="checkbox" name="mostrar_preco" checked> Mostrar o preço desta pedra no site</label>
-      <p class="contagem" id="aviso-flag-global" hidden style="margin:4px 0 0;color:var(--aviso)">Atenção: os preços estão desligados para o site inteiro (chave na tela inicial do painel).</p>
+      <p class="contagem" style="margin:0">Desmarque só para pedras com valor “sob consulta”. Para esconder o preço de todas, use “O que aparece no site”.</p>
+      <p class="contagem" id="aviso-flag-global" hidden style="margin:6px 0 0;color:var(--aviso)">Atenção: o preço está desligado para o site inteiro em “O que aparece no site”.</p>
     </div>
 
     <div class="caixa">
@@ -347,7 +374,7 @@
     config = rc.data || { mostrar_preco: true };
     produtos = rp.data || [];
     filtros.definirProdutos(produtos);
-    $('flag-preco').checked = !!config.mostrar_preco; textoFlag();
+    desenharExibicao();
     $('c-nome').value = config.nome_empresa || '';
     $('c-zap').value = config.whatsapp || '';
     desenharLista();
@@ -383,19 +410,33 @@
   $('b-novo').onclick = () => abrirForm(null);
 
   /* ---------- flag global de preço ---------- */
-  function textoFlag() {
-    $('txt-flag').textContent = $('flag-preco').checked
-      ? 'Todos que abrirem o catálogo veem o valor por m².'
-      : 'Preços escondidos: o site mostra “Valor sob consulta”.';
+  /* ---------- O que aparece no site ---------- */
+  function desenharExibicao() {
+    const desligados = C.CAMPOS_EXIBICAO.filter((x) => !C.exibe(config, x.k)).length;
+    $('resumo-exibicao').textContent = desligados ? `· ${desligados} ${desligados === 1 ? 'item escondido' : 'itens escondidos'}` : '· tudo visível';
+    $('lista-exibicao').innerHTML = C.CAMPOS_EXIBICAO.map((x) => {
+      const on = C.exibe(config, x.k), id = x.k === 'preco' ? 'flag-preco' : 'exibir-' + x.k;
+      return `<label class="linha-exibe ${on ? '' : 'desligado'}" for="${id}"><span><b>${C.esc(x.rotulo)}</b>${x.ajuda ? `<small>${C.esc(x.ajuda)}</small>` : ''}</span>
+        <span class="chave"><input type="checkbox" id="${id}" data-campo="${x.k}" ${on ? 'checked' : ''} aria-label="Mostrar ${C.esc(x.rotulo)} no site"><span></span></span></label>`;
+    }).join('');
   }
-  $('flag-preco').addEventListener('change', async () => {
-    const valor = $('flag-preco').checked;
-    $('flag-preco').disabled = true;
-    const { data, error } = await cliente.from('configuracoes').update({ mostrar_preco: valor }).eq('id', 1).select().single();
-    $('flag-preco').disabled = false;
-    if (error) { $('flag-preco').checked = !valor; toast(traduzir(error), true); }
-    else { config = data; toast(valor ? 'Preços visíveis no site' : 'Preços escondidos do site'); }
-    textoFlag();
+  $('lista-exibicao').addEventListener('change', async (ev) => {
+    const el = ev.target.closest('input[data-campo]'); if (!el) return;
+    const k = el.dataset.campo, valor = el.checked, rotulo = (C.CAMPOS_EXIBICAO.find((x) => x.k === k) || {}).rotulo || k;
+    el.disabled = true;
+    const mudanca = k === 'preco' ? { mostrar_preco: valor } : { exibir: Object.assign({}, config.exibir || {}, { [k]: valor }) };
+    const { data, error } = await cliente.from('configuracoes').update(mudanca).eq('id', 1).select().single();
+    el.disabled = false;
+    if (error) {
+      el.checked = !valor;
+      const m = String(error.message || '');
+      toast(/exibir/.test(m) && /column|coluna/i.test(m)
+        ? 'Falta atualizar o banco: rode o arquivo supabase/atualizacao-2-exibicao.sql no SQL Editor do Supabase.'
+        : traduzir(error), true);
+      return;
+    }
+    config = data; desenharExibicao();
+    toast(`${rotulo}: ${valor ? 'aparece no site' : 'escondido do site'}`);
   });
 
   $('b-salvar-empresa').onclick = async () => {
@@ -450,10 +491,31 @@
     fotos = p ? C.normalizarFotos(p.fotos) : [];
     form.dataset.id = p ? p.id : novoId();
     novasEnviadas = []; removidas = []; sujo = false;
-    $('aviso-flag-global').hidden = config.mostrar_preco !== false;
+    $('aviso-flag-global').hidden = C.exibe(config, 'preco');
+    marcarOcultos();
     desenharFotos(); calcular();
     mostrar('tela-form'); window.scrollTo(0, 0);
     if (!p) setTimeout(() => campo('nome').focus({ preventScroll: true }), 50);
+  }
+
+  /* marca no formulário os campos que estão escondidos do site */
+  function marcarOcultos() {
+    form.querySelectorAll('.tag-oculto').forEach((t) => t.remove());
+    const alvos = {
+      codigo: ['[data-campo=codigo] > span'], lote: ['[data-campo=lote] > span'], espessura: ['[data-campo=espessura_cm] > span'],
+      medidas: ['[data-campo=comprimento_cm] > span', '[data-campo=altura_cm] > span'], estoque: ['[data-campo=qtd_chapas] > span'],
+      preco: ['[data-campo=preco_m2] > span'], tipo: ['select[name=tipo]'], cor: ['input[name=cor]'], acabamento: ['select[name=acabamento]'],
+      origem: ['input[name=origem]'], aplicacoes: ['#aplicacoes'], observacoes: ['textarea[name=observacoes]']
+    };
+    for (const [k, sels] of Object.entries(alvos)) {
+      if (C.exibe(config, k)) continue;
+      for (const sel of sels) {
+        let el = form.querySelector(sel); if (!el) continue;
+        if (el.tagName !== 'SPAN') el = (el.closest('.campo') && el.closest('.campo').querySelector(':scope > span:not(.oculto-leitor)')) || el.closest('.caixa').querySelector('h2');
+        const tag = document.createElement('span'); tag.className = 'tag-oculto'; tag.textContent = 'oculto no site';
+        el.appendChild(tag);
+      }
+    }
   }
 
   function calcular() {

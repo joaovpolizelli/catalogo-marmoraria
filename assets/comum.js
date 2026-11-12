@@ -20,6 +20,43 @@
     esgotado: { rotulo: 'Esgotado', cls: 'fim' }
   };
 
+  /* O que aparece no site — configuração geral (vale para todas as pedras).
+     'preco' usa a coluna mostrar_preco; os demais ficam em configuracoes.exibir. */
+  const CAMPOS_EXIBICAO = [
+    { k: 'preco', rotulo: 'Preço por m²', ajuda: 'Desligado, o site mostra “Valor sob consulta”.' },
+    { k: 'codigo', rotulo: 'Código' },
+    { k: 'lote', rotulo: 'Lote' },
+    { k: 'tipo', rotulo: 'Tipo de pedra' },
+    { k: 'cor', rotulo: 'Cor' },
+    { k: 'acabamento', rotulo: 'Acabamento' },
+    { k: 'espessura', rotulo: 'Espessura' },
+    { k: 'medidas', rotulo: 'Medida da chapa', ajuda: 'Comprimento × altura e m² por chapa.' },
+    { k: 'estoque', rotulo: 'Estoque', ajuda: 'Chapas no lote e total em m².' },
+    { k: 'origem', rotulo: 'Origem' },
+    { k: 'aplicacoes', rotulo: 'Indicado para' },
+    { k: 'observacoes', rotulo: 'Observações' },
+    { k: 'situacao', rotulo: 'Situação', ajuda: 'Selos Disponível, Reservado, Esgotado…' },
+    { k: 'videos', rotulo: 'Vídeos' },
+    { k: 'whatsapp', rotulo: 'Botão do WhatsApp' }
+  ];
+  function exibe(config, campo) {
+    if (!config) return true;
+    if (campo === 'preco') return config.mostrar_preco !== false;
+    const e = config.exibir || {};
+    return e[campo] !== false;
+  }
+  /* Garante no navegador o mesmo que a vitrine do banco já faz (proteção dupla) */
+  function aplicarExibicao(p, config) {
+    const x = Object.assign({}, p);
+    const zera = { codigo: ['codigo'], lote: ['lote'], tipo: ['tipo'], cor: ['cor'], origem: ['origem'], acabamento: ['acabamento'],
+      espessura: ['espessura_cm'], medidas: ['comprimento_cm', 'altura_cm'], estoque: ['qtd_chapas'], observacoes: ['observacoes'] };
+    for (const [campo, cols] of Object.entries(zera)) if (!exibe(config, campo)) cols.forEach((col) => (x[col] = null));
+    if (!exibe(config, 'aplicacoes')) x.aplicacoes = [];
+    if (!exibe(config, 'preco')) x.preco_m2 = null;
+    if (!exibe(config, 'videos')) x.fotos = (Array.isArray(x.fotos) ? x.fotos : []).filter((f) => !(f && f.v));
+    return x;
+  }
+
   function criarCliente() {
     if (MODO_DEMO) return window.DemoSupabase.createClient();
     if (!window.supabase || !window.supabase.createClient) {
@@ -249,6 +286,7 @@
      ===================================================================== */
   function Filtros(opcoes) {
     const modo = opcoes.modo || 'publico';
+    let semSituacao = !!opcoes.semSituacao;
     const aoMudar = opcoes.aoMudar || (() => {});
     const padrao = () => ({ busca: '', tipo: '', cor: '', acabamento: '', espessura: '', aplicacao: '', origem: '',
       precoMin: '', precoMax: '', areaMin: '', status: modo === 'publico' ? 'ativos' : '', publicado: '', semFoto: false, comVideo: false });
@@ -333,12 +371,13 @@
           ${sel('flt-aplicacao', 'Indicado para', uniq(produtos.flatMap((p) => p.aplicacoes || [])), 'Qualquer uso')}
           ${sel('flt-origem', 'Origem', uniq(produtos.map((p) => grupoOrigem(p.origem))), 'Todas')}
         </div>
-        ${temPreco ? `<fieldset class="faixa"><legend>Preço por m² (R$)</legend>
-          <label><span class="oculto-leitor">Preço mínimo</span><input id="flt-preco-min" type="text" inputmode="decimal" placeholder="de"></label>
-          <span aria-hidden="true">até</span>
-          <label><span class="oculto-leitor">Preço máximo</span><input id="flt-preco-max" type="text" inputmode="decimal" placeholder="até"></label></fieldset>` : ''}
+        ${temPreco ? `<fieldset class="faixa"><legend>Faixa de preço por m²</legend>
+          <div class="faixa-campos">
+            <label class="campo"><span>Mínimo</span><span class="com-prefixo"><i aria-hidden="true">R$</i><input id="flt-preco-min" type="text" inputmode="decimal" placeholder="0,00" aria-label="Preço mínimo por m², em reais"></span></label>
+            <label class="campo"><span>Máximo</span><span class="com-prefixo"><i aria-hidden="true">R$</i><input id="flt-preco-max" type="text" inputmode="decimal" placeholder="sem limite" aria-label="Preço máximo por m², em reais"></span></label>
+          </div><small class="ajuda-faixa">Preencha só um dos dois se quiser. Ex.: máximo 500 mostra pedras de até R$ 500/m².</small></fieldset>` : ''}
         ${temArea ? `<label class="campo"><span>Estoque mínimo do lote (m²)</span><input id="flt-area-min" type="text" inputmode="decimal" placeholder="Ex.: 20"><small>Mostra só lotes com pelo menos essa metragem.</small></label>` : ''}
-        <div class="filtros-grade">${modo === 'admin' ? statusAdmin : statusPublico}</div>
+        <div class="filtros-grade">${modo === 'admin' ? statusAdmin : (semSituacao ? '' : statusPublico)}</div>
         <label class="marcar"><input type="checkbox" id="flt-video"> Só pedras com vídeo</label>
         ${modo === 'admin' ? '<label class="marcar"><input type="checkbox" id="flt-sem-foto"> Só pedras sem foto</label>' : ''}`;
       escreverNaTela();
@@ -387,6 +426,7 @@
 
     return {
       definirProdutos(lista) { produtos = lista; montar(); },
+      semSituacao() { semSituacao = true; },
       abrir() { escreverNaTela(); atualizarBotaoVer(); fundo.hidden = false; document.body.style.overflow = 'hidden'; const f = corpo.querySelector('select,input'); if (f) f.focus({ preventScroll: true }); },
       fechar,
       aplicar(lista, ordem) { return ordenar(lista.filter((p) => passa(p)), ordem); },
@@ -401,6 +441,7 @@
   window.Catalogo = {
     MODO_DEMO, TIPOS, ACABAMENTOS, APLICACOES, ESPESSURAS, STATUS,
     criarCliente, esc, fmtBRL, fmtNum, lerNumero, areas, emCm, normalizarFotos, urlFoto,
+    CAMPOS_EXIBICAO, exibe, aplicarExibicao,
     temVideo, fmtDuracao, LIMITE_VIDEO_MB, tipoVideo, extVideo, gerarCapa, Filtros, compactarVideo, podeCompactar,
     comprimirImagem, rotuloStatus, badgeStatus, semAcento, avisoDemo
   };

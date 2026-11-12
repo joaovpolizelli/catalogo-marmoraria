@@ -61,13 +61,19 @@ No **Safari**, abra o endereço → botão **Compartilhar** → **Adicionar à T
 
 ---
 
+## Atualizações do banco
+
+Quando uma melhoria precisar mexer no banco, ela vem num arquivo `supabase/atualizacao-N-....sql`. Basta abrir o arquivo no GitHub, copiar, colar no **SQL Editor** do Supabase e clicar em **Run**. Nenhuma atualização apaga dados.
+
+- `atualizacao-2-exibicao.sql`: ativa o cartão **O que aparece no site** no painel.
+
 ## Uso no dia a dia (para sua esposa)
 
 | Quero… | Como |
 |---|---|
 | Cadastrar | **+ Nova pedra** → fotos → nome e código → **Salvar** |
 | Novo lote da mesma pedra | Abra a pedra → **Cadastrar novo lote desta pedra** (copia tudo, só muda lote/fotos) |
-| Esconder **todos** os preços | Chave **Mostrar preços no site** na tela inicial do painel |
+| Esconder uma informação do site (preço, lote, código, estoque…) | Painel → **O que aparece no site** → desligue o item. Vale para todas as pedras |
 | Esconder o preço de **uma** pedra | Na pedra, desmarque **Mostrar o preço desta pedra no site** |
 | Tirar do site sem apagar | Desmarque **Aparecer no site** |
 | Pedra vendida | **Situação: Esgotado**. Some da lista padrão do catálogo, mas continua cadastrada |

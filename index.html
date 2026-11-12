@@ -73,12 +73,13 @@
     try {
       cliente = C.criarCliente();
       const [rc, rp] = await Promise.all([
-        cliente.from('configuracoes').select('nome_empresa, whatsapp, mostrar_preco').eq('id', 1).maybeSingle(),
+        cliente.from('configuracoes').select('*').eq('id', 1).maybeSingle(),
         cliente.from('catalogo_publico').select('*').order('nome', { ascending: true })
       ]);
       if (rp.error) throw rp.error;
       config = rc.data || {};
-      produtos = (rp.data || []).map((p) => Object.assign(p, { _fotos: C.normalizarFotos(p.fotos) }));
+      produtos = (rp.data || []).map((p) => C.aplicarExibicao(p, config)).map((p) => Object.assign(p, { _fotos: C.normalizarFotos(p.fotos) }));
+      if (!C.exibe(config, 'situacao')) filtros.semSituacao();
       if (config.nome_empresa && config.nome_empresa !== 'Catálogo de Mármores') { $('empresa').textContent = config.nome_empresa; document.title = config.nome_empresa + ' · Catálogo'; }
       montarFiltros();
       desenhar();
@@ -135,7 +136,7 @@
       const meta = [p.codigo, p.lote ? 'Lote ' + p.lote : '', p.espessura_cm ? C.fmtNum(p.espessura_cm) + ' cm' : ''].filter(Boolean).join(' · ');
       return `<button class="card ${p.status === 'esgotado' ? 'esgotado' : ''}" type="button" data-id="${C.esc(p.id)}">
         <div class="foto">${f && f.p ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="${C.esc(p.nome)}" loading="lazy">` : `<div class="sem-foto">${f ? 'Vídeo' : 'Sem foto'}</div>`}
-          ${p.status !== 'disponivel' ? C.badgeStatus(p.status) : ''}
+          ${p.status !== 'disponivel' && C.exibe(config, 'situacao') ? C.badgeStatus(p.status) : ''}
           ${nVideos ? `<span class="selo-video"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>${nVideos > 1 ? nVideos + ' vídeos' : 'Vídeo'}</span>` : ''}</div>
         <div class="info"><span class="nome">${C.esc(p.nome)}</span>
           <span class="meta">${C.esc(meta)}</span>
@@ -166,15 +167,18 @@
       ['Origem', p.origem]
     ].filter(([, v]) => v);
     const link = location.href.split('#')[0] + '#p=' + encodeURIComponent(p.id);
-    const msg = `Olá! Tenho interesse na pedra *${p.nome}* (código ${p.codigo}${p.lote ? ', lote ' + p.lote : ''}).\n${link}`;
-    const zap = config.whatsapp ? `https://wa.me/${String(config.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}` : '';
+    const ref = [p.codigo ? 'código ' + p.codigo : '', p.lote ? 'lote ' + p.lote : ''].filter(Boolean).join(', ');
+    const msg = `Olá! Tenho interesse na pedra *${p.nome}*${ref ? ' (' + ref + ')' : ''}.\n${link}`;
+    const zap = config.whatsapp && C.exibe(config, 'whatsapp') ? `https://wa.me/${String(config.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(msg)}` : '';
     $('folha').innerHTML = `
       <button class="fechar" type="button" id="fechar" aria-label="Fechar">×</button>
-      <div class="galeria" id="galeria"></div>
-      <div class="miniaturas" id="minis"></div>
-      <div class="salvar" id="salvar"></div>
+      <div class="midia">
+        <div class="galeria" id="galeria"></div>
+        <div class="miniaturas" id="minis"></div>
+        <div class="salvar" id="salvar"></div>
+      </div>
       <div class="detalhe">
-        ${C.badgeStatus(p.status)}
+        ${C.exibe(config, 'situacao') ? C.badgeStatus(p.status) : ''}
         <h2 id="d-nome">${C.esc(p.nome)}</h2>
         <p class="sub">${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : ''].filter(Boolean).join(' · '))}</p>
         ${linhaPreco(p, true)}
@@ -193,7 +197,7 @@
     $('fechar').focus();
     $('fechar').onclick = () => fechar(true);
     $('compartilhar').onclick = async () => {
-      const dados = { title: p.nome, text: `${p.nome} (${p.codigo})`, url: link };
+      const dados = { title: p.nome, text: p.codigo ? `${p.nome} (${p.codigo})` : p.nome, url: link };
       try {
         if (navigator.share) { await navigator.share(dados); return; }
         await navigator.clipboard.writeText(link); toast('Link copiado');

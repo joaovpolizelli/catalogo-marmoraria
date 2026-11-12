@@ -216,3 +216,69 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .miniaturas button { position: relative; }
 .miniaturas .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 16px; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
 .capa-vazia { width: 100%; height: 100%; display: grid; place-items: center; background: #24272a; color: #fff; font-size: 12px; }
+
+/* ---------- filtro de preço (faixa) ---------- */
+.faixa { display: block; }
+.faixa-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.faixa .campo { margin-bottom: 4px; }
+.com-prefixo { position: relative; display: block; }
+.com-prefixo i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--texto-2); font-size: 15px; pointer-events: none; }
+.com-prefixo input { padding-left: 40px !important; }
+.ajuda-faixa { display: block; color: var(--texto-2); font-size: 12.5px; margin: 2px 0 12px; }
+
+/* =====================================================================
+   RESPONSIVIDADE — celular pequeno, celular deitado, tablet, notebook, monitor
+   ===================================================================== */
+.topo-interno, .conteudo { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.midia { min-width: 0; }
+
+/* celulares bem pequenos (iPhone SE 1ª geração, Android compactos) */
+@media (max-width: 359px) {
+  .grade { grid-template-columns: 1fr; }
+  .marca .logo { height: 34px; }
+  .marca .titulo b { font-size: 17px; }
+  .chip { padding: 6px 11px; font-size: 13px; }
+  .ficha { grid-template-columns: 1fr; }
+  .detalhe h2 { font-size: 28px; }
+}
+
+/* celular deitado: a galeria não pode ocupar a tela inteira */
+@media (orientation: landscape) and (max-height: 520px) {
+  .topo { position: static; }
+  .galeria { aspect-ratio: auto; height: 72vh; }
+  .folha { max-height: 100vh; border-radius: 0; }
+  .modal { align-items: stretch; }
+}
+
+/* tablet */
+@media (min-width: 700px) {
+  .marca .logo { height: 48px; }
+  .card .nome { font-size: 22px; }
+}
+
+/* notebook e computador: detalhe em duas colunas (fotos | informações) */
+@media (min-width: 960px) {
+  .topo-interno, .conteudo { max-width: 1280px; }
+  .busca { max-width: 640px; }
+  .folha { max-width: 1120px; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); max-height: 90vh; }
+  .midia { position: sticky; top: 0; align-self: start; background: var(--superficie); padding-bottom: 14px; }
+  .galeria { aspect-ratio: 4 / 3; max-height: 70vh; }
+  .detalhe { padding: 28px 28px 28px 20px; overflow-wrap: anywhere; }
+  .fechar { right: 14px; top: 14px; }
+}
+
+/* monitores grandes */
+@media (min-width: 1400px) {
+  .grade { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .topo-interno, .conteudo { max-width: 1440px; }
+}
+
+/* celular deitado com largura suficiente: foto e ficha lado a lado */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+  .modal { padding: 0; align-items: stretch; }
+  .folha { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); max-width: none; height: 100vh; max-height: 100vh; border-radius: 0; }
+  .midia { position: sticky; top: 0; align-self: start; }
+  .galeria { height: 64vh; }
+  .detalhe { padding: 14px max(16px, env(safe-area-inset-right)) 20px 14px; }
+  .detalhe h2 { font-size: 26px; }
+}

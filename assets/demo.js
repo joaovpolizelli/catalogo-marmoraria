@@ -36,7 +36,7 @@
       atualizado_em: new Date(agora - i * 864e5).toISOString()
     }, o);
     return {
-      configuracoes: [{ id: 1, mostrar_preco: true, nome_empresa: 'Marmoraria Exemplo', whatsapp: '5519999999999' }],
+      configuracoes: [{ id: 1, mostrar_preco: true, nome_empresa: 'Marmoraria Exemplo', whatsapp: '5519999999999', exibir: {} }],
       produtos: [
         p({ nome: 'Branco Carrara', codigo: 'MAR-001', tipo: 'Mármore', cor: 'Branco', origem: 'Importado (Itália)', acabamento: 'Polido', espessura_cm: 2, comprimento_cm: 290, altura_cm: 175, lote: 'L-2611', qtd_chapas: 14, preco_m2: 890, aplicacoes: ['Bancada de cozinha', 'Banheiro / lavatório', 'Parede / revestimento'], observacoes: 'Veios cinza suaves. Ótimo para lavatórios.', fotos: [f('#f4f2ee', '#8d8f94', 3, '#dcd8d1'), f('#efece6', '#7e8187', 11, '#d3cec5')] }, 1),
         p({ nome: 'Preto São Gabriel', codigo: 'GRA-014', tipo: 'Granito', cor: 'Preto', origem: 'Nacional (ES)', acabamento: 'Polido', espessura_cm: 2, comprimento_cm: 300, altura_cm: 190, lote: 'L-2598', qtd_chapas: 22, preco_m2: 420, aplicacoes: ['Bancada de cozinha', 'Escada', 'Área gourmet / churrasqueira'], fotos: [f('#2a2a2c', '#55565a', 7, '#121213')] }, 2),
@@ -64,9 +64,15 @@
 
   function vitrine() {
     const c = db().configuracoes[0];
+    const e = c.exibir || {}, mostra = (k) => e[k] !== false;
     return db().produtos.filter((p) => p.publicado).map((p) => {
       const v = copia(p);
       if (!(c.mostrar_preco && p.mostrar_preco)) v.preco_m2 = null;
+      const zera = { codigo: ['codigo'], lote: ['lote'], tipo: ['tipo'], cor: ['cor'], origem: ['origem'], acabamento: ['acabamento'],
+        espessura: ['espessura_cm'], medidas: ['comprimento_cm', 'altura_cm'], estoque: ['qtd_chapas'], observacoes: ['observacoes'] };
+      for (const [k, cols] of Object.entries(zera)) if (!mostra(k)) cols.forEach((col) => (v[col] = null));
+      if (!mostra('aplicacoes')) v.aplicacoes = [];
+      if (!mostra('videos')) v.fotos = (v.fotos || []).filter((f) => !(f && f.v));
       delete v.mostrar_preco; delete v.publicado; delete v.criado_em;
       return v;
     });
