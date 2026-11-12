@@ -16,15 +16,49 @@
 <link rel="stylesheet" href="assets/estilo.css">
 <style>
   .painel { max-width: 760px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) 120px max(16px, env(safe-area-inset-left)); }
+  /* ---------- topo do painel ---------- */
   .topo-admin { position: sticky; top: 0; z-index: 25; background: var(--marca-fundo); color: var(--marca-texto); border-bottom: 3px solid var(--acento); }
-  .topo-admin .interno { max-width: 760px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 12px; }
-  .topo-admin .logo { height: 36px; width: auto; flex: 0 0 auto; }
-  .topo-admin .titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .topo-admin .titulo b { font: 600 20px/1.05 var(--serif); letter-spacing: .5px; color: var(--acento); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .topo-admin .titulo small { color: var(--marca-texto-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .topo-admin .acoes-topo { display: flex; gap: 6px; flex: 0 0 auto; }
-  .topo-admin .botao { background: var(--marca-fundo-2); border-color: var(--marca-linha); color: var(--marca-texto); }
-  @media (max-width: 400px) { .topo-admin .logo { height: 28px; } .topo-admin .botao.pequeno { padding: 7px 10px; } }
+  .topo-admin .interno { max-width: 760px; margin: 0 auto; min-height: 66px; padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+    display: flex; align-items: center; gap: 18px; }
+  .marca-admin { display: flex; align-items: center; flex: 0 0 auto; border: 0; background: none; padding: 4px 0; border-radius: 8px; }
+  .marca-admin img { height: 38px; width: auto; display: block; }
+  .secao-admin { display: flex; align-items: center; gap: 18px; min-width: 0; flex: 1 1 auto; }
+  .secao-admin::before { content: ''; width: 1px; height: 30px; background: var(--marca-linha); flex: 0 0 auto; }
+  .secao-admin .h1 { margin: 0; font: 600 23px/1 var(--serif); letter-spacing: .4px; color: var(--marca-texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 2px; }
+  .acoes-topo { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .acao-topo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 10px;
+    border: 1px solid var(--marca-linha); background: var(--marca-fundo-2); color: var(--marca-texto); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  @media (hover: hover) { .acao-topo:hover { border-color: var(--acento); } }
+  .acao-topo svg { width: 18px; height: 18px; flex: 0 0 auto; }
+  .acao-topo[aria-current="page"] { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+  .conta { position: relative; flex: 0 0 auto; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--acento); background: var(--marca-fundo-2); color: var(--marca-texto);
+    font: 700 16px/1 var(--sans); display: grid; place-items: center; padding: 0; text-transform: uppercase; }
+  .menu-conta { position: absolute; right: 0; top: calc(100% + 10px); background: var(--superficie); color: var(--texto); border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(0,0,0,.28); width: min(280px, calc(100vw - 32px)); padding: 14px; z-index: 40; }
+  .menu-conta small { display: block; color: var(--texto-2); font-size: 12px; }
+  .menu-conta b { display: block; font-size: 14px; overflow-wrap: anywhere; margin: 2px 0 12px; }
+  @media (max-width: 760px) { .acao-topo .rotulo { display: none; } .acao-topo { width: 40px; padding: 0; } }
+  @media (max-width: 430px) {
+    .topo-admin .interno { gap: 12px; min-height: 58px; }
+    .marca-admin img { height: 30px; }
+    .secao-admin { gap: 12px; }
+    .acoes-topo { gap: 6px; }
+    .acao-topo, .avatar { width: 36px; height: 36px; }
+  }
+  .titulo-movel { display: none; }
+  @media (max-width: 600px) {
+    .secao-admin { display: none; }
+    .topo-admin .interno { justify-content: space-between; }
+    .titulo-movel { display: block; max-width: 760px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+      font: 600 30px/1.1 var(--serif); letter-spacing: .3px; color: var(--texto); text-wrap: balance; }
+    .titulo-movel + .painel, .titulo-movel ~ .painel { padding-top: 10px; }
+  }
+  @media (max-width: 420px) {
+    #lista .item .seta-item { display: none; }
+    #lista .item .txt b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
+  }
+
   .barra-admin { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
   .barra-admin .campo { flex: 1 1 220px; margin: 0; }
   .barra-admin .btn-filtros { background: var(--superficie); color: var(--texto); border-color: var(--linha); min-height: 46px; }
@@ -34,7 +68,6 @@
   .caixa h2 { font: 600 21px var(--serif); margin: 0 0 10px; }
   .lista-exibicao { display: grid; grid-template-columns: 1fr; gap: 0 18px; margin-top: 6px; }
   @media (min-width: 640px) { .lista-exibicao { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (min-width: 1000px) { .lista-exibicao { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .linha-exibe { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linha); cursor: pointer; min-width: 0; }
   .linha-exibe > span:first-child { min-width: 0; }
   .linha-exibe b { display: block; font-size: 15px; font-weight: 600; }
@@ -52,11 +85,6 @@
   @media (min-width: 1400px) { .lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   /* ---------- celulares pequenos ---------- */
   @media (max-width: 360px) {
-    .topo-admin .titulo small { display: none; }
-    .topo-admin .interno { gap: 8px; }
-    .topo-admin .logo { height: 24px; }
-    .topo-admin .titulo b { font-size: 16px; }
-    .topo-admin .botao.pequeno { padding: 6px 8px; font-size: 13px; min-height: 34px; }
     .duas { grid-template-columns: 1fr; }
   }
   .chave { position: relative; flex: 0 0 auto; width: 54px; height: 32px; }
@@ -131,6 +159,44 @@
   .dica { background: var(--aviso-bg); color: var(--aviso); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 14px; }
   .msg-erro { background: var(--fim-bg); color: var(--fim); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; font-weight: 500; }
   @media (max-width: 380px) { .tres { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  /* ---------- cabeçalho da lista ---------- */
+  .cabeca-lista { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 14px; flex-wrap: wrap; }
+  .resumo-lista { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .resumo-lista li { background: var(--superficie); border: 1px solid var(--linha); border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--texto-2); }
+  .resumo-lista li b { color: var(--texto); font-weight: 700; }
+  #b-novo-topo { display: none; }
+  @media (min-width: 900px) { #b-novo-topo { display: inline-flex; } .fab { display: none; } }
+  .item { transition: box-shadow .15s, transform .15s; }
+  @media (hover: hover) { .item:hover { box-shadow: 0 2px 4px rgba(22,24,26,.08), 0 10px 24px rgba(22,24,26,.10); } }
+  .item .seta-item { color: var(--texto-2); font-size: 20px; flex: 0 0 auto; padding-left: 2px; }
+  /* ---------- configurações ---------- */
+  .intro-config { margin: 2px 0 16px; color: var(--texto-2); font-size: 14.5px; }
+  .grupo-exibe { margin-top: 14px; }
+  .grupo-exibe h3 { margin: 0 0 2px; font-size: 12px; letter-spacing: .8px; text-transform: uppercase; color: var(--texto-2); font-weight: 700; }
+  .linha-exibe.mudou { background: color-mix(in srgb, var(--acento) 9%, transparent); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-radius: 8px; }
+  .barra-pendente { position: sticky; bottom: 0; z-index: 6; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--marca-fundo); color: var(--marca-texto); border-radius: 14px; padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); margin-top: 8px; box-shadow: 0 -6px 24px rgba(0,0,0,.18); }
+  .barra-pendente span { flex: 1 1 160px; font-size: 14px; }
+  .barra-pendente .botao { min-height: 42px; }
+  @media (max-width: 600px) { .barra-pendente span { flex-basis: 100%; } .barra-pendente .botao { flex: 1; } }
+  .barra-pendente .botao:not(.primario) { background: transparent; color: var(--marca-texto); border-color: var(--marca-linha); }
+  @media (min-width: 1000px) { .config-grade { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 0 16px; align-items: start; } }
+  /* ---------- janela de confirmação ---------- */
+  .dialogo-fundo { position: fixed; inset: 0; z-index: 80; background: rgba(10,11,12,.62); display: flex; align-items: flex-end; justify-content: center; }
+  @media (min-width: 640px) { .dialogo-fundo { align-items: center; padding: 24px; } }
+  .dialogo { background: var(--superficie); color: var(--texto); width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; border-radius: 18px 18px 0 0;
+    padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); }
+  @media (min-width: 640px) { .dialogo { border-radius: 18px; } }
+  .dialogo h2 { margin: 0 0 4px; font: 600 26px/1.1 var(--serif); }
+  .lista-mudancas { list-style: none; margin: 14px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .lista-mudancas li { display: flex; align-items: flex-start; gap: 10px; background: var(--superficie-2); border-radius: 10px; padding: 10px 12px; font-size: 14.5px; }
+  .lista-mudancas .sinal { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; margin-top: 1px; }
+  .lista-mudancas .sai { background: var(--fim-bg); color: var(--fim); }
+  .lista-mudancas .entra { background: var(--ok-bg); color: var(--ok); }
+  .lista-mudancas .muda { background: var(--neutro-bg); color: var(--neutro); }
+  .lista-mudancas small { display: block; color: var(--texto-2); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+  .dialogo-acoes { display: flex; gap: 10px; }
+  .dialogo-acoes .botao { flex: 1; }
 </style>
 </head>
 <body>
@@ -153,31 +219,32 @@
 <!-- ============ TOPO (lista e formulário) ============ -->
 <header class="topo-admin" id="topo-admin" hidden>
   <div class="interno">
-    <img class="logo" src="assets/logo-oligran.png" alt="Oligran Distribuidora" width="201" height="56">
-    <div class="titulo"><b id="ta-titulo">Painel</b><small id="quem"></small></div>
-    <div class="acoes-topo" id="acoes-lista"><a class="botao pequeno" href="./" target="_blank" rel="noopener">Ver site</a><button class="botao pequeno" id="b-sair" type="button">Sair</button></div>
-    <div class="acoes-topo" id="acoes-form" hidden><button class="botao pequeno" id="b-voltar" type="button">Cancelar</button></div>
+    <button class="marca-admin" type="button" id="b-inicio" aria-label="Ir para a lista de pedras"><img src="assets/logo-oligran.png" alt="Oligran Distribuidora" width="201" height="56"></button>
+    <div class="secao-admin"><div class="h1" role="heading" aria-level="1" id="ta-titulo">Pedras</div></div>
+    <nav class="acoes-topo" aria-label="Ações do painel">
+      <a class="acao-topo" id="a-ver-site" href="./" target="_blank" rel="noopener" title="Abrir o catálogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span class="rotulo">Ver site</span></a>
+      <button class="acao-topo" type="button" id="b-config" title="Configurações do site"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="rotulo">Configurações</span></button>
+      <button class="acao-topo" type="button" id="b-voltar" hidden title="Voltar sem salvar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span class="rotulo">Cancelar</span></button>
+      <button class="acao-topo" type="button" id="b-config-voltar" hidden title="Voltar para as pedras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="rotulo">Voltar</span></button>
+      <div class="conta" id="conta">
+        <button class="avatar" type="button" id="b-conta" aria-haspopup="true" aria-expanded="false" aria-label="Minha conta"><span id="inicial">E</span></button>
+        <div class="menu-conta" id="menu-conta" hidden>
+          <small>Conectada como</small><b id="quem"></b>
+          <button class="botao cheio" id="b-sair" type="button">Sair do painel</button>
+        </div>
+      </div>
+    </nav>
   </div>
 </header>
+<h1 class="titulo-movel" id="titulo-movel" hidden>Pedras</h1>
 
 <!-- ============ LISTA ============ -->
 <section id="tela-lista" class="painel" hidden>
 
-  <details class="caixa" id="caixa-exibicao">
-    <summary>O que aparece no site <span class="contagem" id="resumo-exibicao" style="font-weight:400"></span></summary>
-    <p class="contagem" style="margin:10px 0 0">Vale para todas as pedras. O que estiver desligado some do catálogo para vendedores e clientes. Aqui no painel você continua vendo tudo.</p>
-    <div class="lista-exibicao" id="lista-exibicao"></div>
-  </details>
-
-  <details class="caixa" id="caixa-empresa">
-    <summary>Dados da empresa</summary>
-    <div style="margin-top:12px">
-      <label class="campo"><span>Nome que aparece no topo do site</span><input type="text" id="c-nome" maxlength="80"></label>
-      <label class="campo"><span>WhatsApp para os clientes chamarem</span><input type="tel" id="c-zap" placeholder="(19) 99999-9999" inputmode="tel"><small>Deixe vazio para esconder o botão de WhatsApp.</small></label>
-      <button class="botao primario" id="b-salvar-empresa" type="button">Salvar dados</button>
-    </div>
-  </details>
-
+  <div class="cabeca-lista">
+    <ul class="resumo-lista" id="resumo-lista" aria-label="Resumo do catálogo"></ul>
+    <button class="botao primario" id="b-novo-topo" type="button">+ Nova pedra</button>
+  </div>
   <div class="barra-admin">
     <label class="campo"><span class="oculto-leitor">Buscar</span><input type="search" id="busca" placeholder="Buscar nome, código, lote ou cor"></label>
     <button class="btn-filtros" type="button" id="b-filtros" aria-haspopup="dialog">
@@ -193,6 +260,37 @@
   <div class="lista" id="lista"><div class="carregando">Carregando…</div></div>
   <button class="botao primario fab" id="b-novo" type="button">+ Nova pedra</button>
 </section>
+
+<!-- ============ CONFIGURAÇÕES ============ -->
+<section id="tela-config" class="painel" hidden>
+  <p class="intro-config">Estas configurações valem para o site inteiro. Nada muda até você tocar em <b>Salvar alterações</b> e confirmar.</p>
+  <div class="config-grade">
+    <section class="caixa" aria-labelledby="t-exibicao">
+      <h2 id="t-exibicao">O que aparece no site</h2>
+      <p class="contagem" style="margin:0">Desligue o que não quer mostrar para vendedores e clientes. Aqui no painel você continua vendo tudo.</p>
+      <div id="lista-exibicao"></div>
+    </section>
+    <section class="caixa" aria-labelledby="t-empresa">
+      <h2 id="t-empresa">Dados da empresa</h2>
+      <label class="campo"><span>Nome no topo do site</span><input type="text" id="c-nome" maxlength="80" placeholder="Oligran Distribuidora"></label>
+      <label class="campo"><span>WhatsApp para os clientes</span><input type="tel" id="c-zap" placeholder="(16) 3701-1414" inputmode="tel"><small>Com DDD. Vazio = sem botão de WhatsApp no site.</small></label>
+    </section>
+  </div>
+  <div class="barra-pendente" id="barra-pendente" hidden role="region" aria-label="Alterações não salvas">
+    <span id="txt-pendente"></span>
+    <button class="botao" id="b-descartar" type="button">Descartar</button>
+    <button class="botao primario" id="b-salvar-config" type="button">Salvar alterações</button>
+  </div>
+</section>
+
+<div class="dialogo-fundo" id="dlg" hidden>
+  <div class="dialogo" role="alertdialog" aria-modal="true" aria-labelledby="dlg-titulo" aria-describedby="dlg-texto">
+    <h2 id="dlg-titulo">Publicar estas alterações?</h2>
+    <p class="contagem" id="dlg-texto" style="margin:0">Elas passam a valer na hora para todo mundo que abrir o catálogo.</p>
+    <ul class="lista-mudancas" id="dlg-lista"></ul>
+    <div class="dialogo-acoes"><button class="botao" id="dlg-voltar" type="button">Voltar</button><button class="botao primario" id="dlg-ok" type="button">Sim, salvar</button></div>
+  </div>
+</div>
 
 <!-- ============ FORMULÁRIO ============ -->
 <section id="tela-form" class="painel" hidden>
@@ -243,8 +341,8 @@
       <h2>Preço</h2>
       <label class="campo" data-campo="preco_m2"><span>Valor por m² (R$)</span><input type="text" name="preco_m2" inputmode="decimal" placeholder="Ex.: 890,00"></label>
       <label class="marcar"><input type="checkbox" name="mostrar_preco" checked> Mostrar o preço desta pedra no site</label>
-      <p class="contagem" style="margin:0">Desmarque só para pedras com valor “sob consulta”. Para esconder o preço de todas, use “O que aparece no site”.</p>
-      <p class="contagem" id="aviso-flag-global" hidden style="margin:6px 0 0;color:var(--aviso)">Atenção: o preço está desligado para o site inteiro em “O que aparece no site”.</p>
+      <p class="contagem" style="margin:0">Desmarque só para pedras com valor “sob consulta”. Para esconder o preço de todas, use Configurações → O que aparece no site.</p>
+      <p class="contagem" id="aviso-flag-global" hidden style="margin:6px 0 0;color:var(--aviso)">Atenção: o preço está desligado para o site inteiro (Configurações → O que aparece no site).</p>
     </div>
 
     <div class="caixa">
@@ -311,12 +409,23 @@
     clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), ehErro ? 4500 : 2600);
   }
   const mostrar = (tela) => {
-    ['tela-login', 'tela-lista', 'tela-form'].forEach((id) => ($(id).hidden = id !== tela));
+    ['tela-login', 'tela-lista', 'tela-form', 'tela-config'].forEach((id) => ($(id).hidden = id !== tela));
     $('topo-admin').hidden = tela === 'tela-login';
-    $('acoes-lista').hidden = tela !== 'tela-lista';
-    $('acoes-form').hidden = tela !== 'tela-form';
-    if (tela === 'tela-lista') $('ta-titulo').textContent = 'Painel';
+    const naLista = tela === 'tela-lista', noForm = tela === 'tela-form', naConfig = tela === 'tela-config';
+    $('a-ver-site').hidden = noForm; $('b-config').hidden = !naLista; $('conta').hidden = noForm;
+    $('b-voltar').hidden = !noForm; $('b-config-voltar').hidden = !naConfig;
+    $('b-config').setAttribute('aria-current', naConfig ? 'page' : 'false');
+    $('titulo-movel').hidden = tela === 'tela-login';
+    if (naLista) titulo('Pedras');
+    if (naConfig) titulo('Configurações');
+    fecharMenuConta();
+    window.scrollTo(0, 0);
   };
+  function titulo(t) { $('ta-titulo').textContent = t; $('titulo-movel').textContent = t; document.title = t + ' · Painel Oligran'; }
+  function fecharMenuConta() { $('menu-conta').hidden = true; $('b-conta').setAttribute('aria-expanded', 'false'); }
+  $('b-conta').onclick = (e) => { e.stopPropagation(); const abrir = $('menu-conta').hidden; $('menu-conta').hidden = !abrir; $('b-conta').setAttribute('aria-expanded', String(abrir)); };
+  document.addEventListener('click', (e) => { if (!e.target.closest('#conta')) fecharMenuConta(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharMenuConta(); });
 
   /* ---------- login ---------- */
   async function iniciar() {
@@ -354,6 +463,7 @@
       return;
     }
     $('quem').textContent = sessao.user.email;
+    $('inicial').textContent = (sessao.user.email || '?').trim().charAt(0) || '?';
     $('l-senha').value = '';
     mostrar('tela-lista');
     await carregar();
@@ -374,9 +484,6 @@
     config = rc.data || { mostrar_preco: true };
     produtos = rp.data || [];
     filtros.definirProdutos(produtos);
-    desenharExibicao();
-    $('c-nome').value = config.nome_empresa || '';
-    $('c-zap').value = config.whatsapp || '';
     desenharLista();
   }
 
@@ -386,7 +493,11 @@
     const n = filtros.quantidadeAtivos();
     $('n-filtros').hidden = !n; $('n-filtros').textContent = n;
     $('b-limpar-filtros').hidden = !n && !$('busca').value;
-    $('contagem').textContent = produtos.length ? `${lista.length} de ${produtos.length} pedras` : '';
+    $('contagem').textContent = produtos.length && lista.length !== produtos.length ? `Mostrando ${lista.length} de ${produtos.length}` : '';
+    const conta = (fn) => produtos.filter(fn).length;
+    const resumo = [[produtos.length, produtos.length === 1 ? 'pedra' : 'pedras'], [conta((p) => p.status === 'disponivel' && p.publicado), 'disponíveis no site'],
+      [conta((p) => !p.publicado), 'fora do site'], [conta((p) => !C.normalizarFotos(p.fotos).some((m) => m.tipo === 'foto')), 'sem foto']];
+    $('resumo-lista').innerHTML = resumo.filter(([n], i) => i === 0 || n > 0).map(([n, t]) => `<li><b>${n}</b> ${t}</li>`).join('');
     if (!produtos.length) { $('lista').innerHTML = '<div class="vazio"><strong>Nenhuma pedra ainda</strong>Toque em “+ Nova pedra” para cadastrar a primeira.</div>'; return; }
     if (!lista.length) { $('lista').innerHTML = '<div class="vazio">Nada encontrado com esse filtro.</div>'; return; }
     $('lista').innerHTML = lista.map((p) => {
@@ -398,7 +509,7 @@
         <div class="mini">${f ? `<img src="${C.esc(C.urlFoto(cliente, f.p))}" alt="" loading="lazy">` : ''}</div>
         <div class="txt"><b>${C.esc(p.nome)}</b><span>${C.esc([p.codigo, p.lote ? 'Lote ' + p.lote : '', p.cor].filter(Boolean).join(' · '))}</span>
           <span>${p.preco_m2 != null ? C.esc(C.fmtBRL(p.preco_m2)) + '/m²' : 'Sem preço'}${a.total ? ' · ' + C.esc(C.fmtNum(a.total)) + ' m²' : ''}${nv ? ' · ▶ ' + nv : ''}${p.publicado ? '' : ' · fora do site'}</span></div>
-        <div class="lado">${C.badgeStatus(p.status)}</div></button>`;
+        <div class="lado">${C.badgeStatus(p.status)}</div><span class="seta-item" aria-hidden="true">›</span></button>`;
     }).join('');
   }
   let tBusca;
@@ -408,45 +519,109 @@
   $('b-limpar-filtros').addEventListener('click', () => { $('busca').value = ''; filtros.limpar(); desenharLista(); });
   $('lista').addEventListener('click', (e) => { const b = e.target.closest('.item'); if (b) abrirForm(produtos.find((p) => String(p.id) === b.dataset.id)); });
   $('b-novo').onclick = () => abrirForm(null);
+  $('b-novo-topo').onclick = () => abrirForm(null);
+  $('b-inicio').onclick = () => { if (!$('tela-form').hidden) sairDoForm(); else if (!$('tela-config').hidden) sairDaConfig(); };
 
   /* ---------- flag global de preço ---------- */
-  /* ---------- O que aparece no site ---------- */
-  function desenharExibicao() {
-    const desligados = C.CAMPOS_EXIBICAO.filter((x) => !C.exibe(config, x.k)).length;
-    $('resumo-exibicao').textContent = desligados ? `· ${desligados} ${desligados === 1 ? 'item escondido' : 'itens escondidos'}` : '· tudo visível';
-    $('lista-exibicao').innerHTML = C.CAMPOS_EXIBICAO.map((x) => {
-      const on = C.exibe(config, x.k), id = x.k === 'preco' ? 'flag-preco' : 'exibir-' + x.k;
-      return `<label class="linha-exibe ${on ? '' : 'desligado'}" for="${id}"><span><b>${C.esc(x.rotulo)}</b>${x.ajuda ? `<small>${C.esc(x.ajuda)}</small>` : ''}</span>
-        <span class="chave"><input type="checkbox" id="${id}" data-campo="${x.k}" ${on ? 'checked' : ''} aria-label="Mostrar ${C.esc(x.rotulo)} no site"><span></span></span></label>`;
-    }).join('');
+  /* =================== CONFIGURAÇÕES (com confirmação) =================== */
+  const GRUPOS = [
+    ['Preço e estoque', ['preco', 'estoque', 'medidas', 'espessura']],
+    ['Identificação da pedra', ['codigo', 'lote', 'tipo', 'cor', 'acabamento', 'origem']],
+    ['Conteúdo', ['aplicacoes', 'observacoes', 'videos', 'situacao']],
+    ['Contato', ['whatsapp']]
+  ];
+  let rascunho = null;
+  const zapLimpo = (v) => { const z = String(v || '').replace(/\D/g, ''); return z ? (z.length <= 11 ? '55' + z : z) : null; };
+  const fmtZap = (z) => { z = String(z || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, ''); return z.length === 11 ? `(${z.slice(0, 2)}) ${z.slice(2, 7)}-${z.slice(7)}` : z.length === 10 ? `(${z.slice(0, 2)}) ${z.slice(2, 6)}-${z.slice(6)}` : z; };
+  const visivel = (cfg, k) => C.exibe(cfg, k);
+  function abrirConfig() {
+    rascunho = { mostrar_preco: config.mostrar_preco !== false, exibir: Object.assign({}, config.exibir || {}), nome_empresa: config.nome_empresa || '', whatsapp: config.whatsapp || '' };
+    $('c-nome').value = rascunho.nome_empresa === 'Catálogo de Mármores' ? '' : rascunho.nome_empresa;
+    $('c-zap').value = fmtZap(rascunho.whatsapp);
+    desenharExibicao(); atualizarPendentes();
+    mostrar('tela-config');
   }
-  $('lista-exibicao').addEventListener('change', async (ev) => {
+  function lerEmpresa() { rascunho.nome_empresa = $('c-nome').value.trim(); rascunho.whatsapp = $('c-zap').value; }
+  function mudancas() {
+    const lista = [];
+    for (const x of C.CAMPOS_EXIBICAO) {
+      const antes = visivel(config, x.k), depois = visivel(rascunho, x.k);
+      if (antes !== depois) lista.push({ tipo: depois ? 'entra' : 'sai', titulo: x.rotulo, extra: x.k === 'preco' && !depois ? 'Os clientes passam a ver “Valor sob consulta”.' : '' });
+    }
+    const nomeAntes = config.nome_empresa && config.nome_empresa !== 'Catálogo de Mármores' ? config.nome_empresa : '';
+    if (rascunho.nome_empresa !== nomeAntes) lista.push({ tipo: 'muda', titulo: 'Nome no topo do site', extra: `${nomeAntes || '(padrão)'} → ${rascunho.nome_empresa || '(padrão)'}` });
+    const zA = config.whatsapp || null, zD = zapLimpo(rascunho.whatsapp);
+    if (zA !== zD) lista.push({ tipo: 'muda', titulo: 'WhatsApp dos clientes', extra: `${zA ? fmtZap(zA) : '(sem número)'} → ${zD ? fmtZap(zD) : '(sem número)'}` });
+    return lista;
+  }
+  function atualizarPendentes() {
+    const n = mudancas().length;
+    $('barra-pendente').hidden = !n;
+    $('txt-pendente').textContent = n === 1 ? '1 alteração não salva' : `${n} alterações não salvas`;
+  }
+  function desenharExibicao() {
+    const porK = Object.fromEntries(C.CAMPOS_EXIBICAO.map((x) => [x.k, x]));
+    $('lista-exibicao').innerHTML = GRUPOS.map(([nome, ks]) => `<div class="grupo-exibe"><h3>${nome}</h3><div class="lista-exibicao">${ks.map((k) => {
+      const x = porK[k], on = visivel(rascunho, k), mudou = on !== visivel(config, k), id = k === 'preco' ? 'flag-preco' : 'exibir-' + k;
+      return `<label class="linha-exibe ${on ? '' : 'desligado'} ${mudou ? 'mudou' : ''}" for="${id}"><span><b>${C.esc(x.rotulo)}</b>${x.ajuda ? `<small>${C.esc(x.ajuda)}</small>` : ''}</span>
+        <span class="chave"><input type="checkbox" id="${id}" data-campo="${k}" ${on ? 'checked' : ''} aria-label="Mostrar ${C.esc(x.rotulo)} no site"><span></span></span></label>`;
+    }).join('')}</div></div>`).join('');
+  }
+  $('lista-exibicao').addEventListener('change', (ev) => {
     const el = ev.target.closest('input[data-campo]'); if (!el) return;
-    const k = el.dataset.campo, valor = el.checked, rotulo = (C.CAMPOS_EXIBICAO.find((x) => x.k === k) || {}).rotulo || k;
-    el.disabled = true;
-    const mudanca = k === 'preco' ? { mostrar_preco: valor } : { exibir: Object.assign({}, config.exibir || {}, { [k]: valor }) };
-    const { data, error } = await cliente.from('configuracoes').update(mudanca).eq('id', 1).select().single();
-    el.disabled = false;
+    const k = el.dataset.campo;
+    if (k === 'preco') rascunho.mostrar_preco = el.checked; else rascunho.exibir[k] = el.checked;
+    desenharExibicao(); atualizarPendentes();
+    const novo = document.getElementById(el.id); if (novo) novo.focus();
+  });
+  ['c-nome', 'c-zap'].forEach((id) => $(id).addEventListener('input', () => { lerEmpresa(); atualizarPendentes(); }));
+  $('b-descartar').onclick = () => abrirConfig();
+  function sairDaConfig() {
+    if (rascunho && mudancas().length && !confirm('Sair sem salvar? As alterações nas configurações serão descartadas.')) return;
+    rascunho = null; mostrar('tela-lista'); desenharLista();
+  }
+  $('b-config').onclick = abrirConfig;
+  $('b-config-voltar').onclick = sairDaConfig;
+
+  /* janela de confirmação */
+  let focoAntesDlg = null;
+  function abrirDialogo(itens) {
+    $('dlg-lista').innerHTML = itens.map((m) => `<li><span class="sinal ${m.tipo}">${m.tipo === 'sai' ? 'Some do site' : m.tipo === 'entra' ? 'Volta ao site' : 'Muda'}</span>
+      <span><b>${C.esc(m.titulo)}</b>${m.extra ? `<small>${C.esc(m.extra)}</small>` : ''}</span></li>`).join('');
+    focoAntesDlg = document.activeElement;
+    $('dlg').hidden = false; document.body.style.overflow = 'hidden'; $('dlg-voltar').focus();
+  }
+  function fecharDialogo() { $('dlg').hidden = true; document.body.style.overflow = ''; if (focoAntesDlg) focoAntesDlg.focus(); }
+  $('dlg-voltar').onclick = fecharDialogo;
+  $('dlg').addEventListener('click', (e) => { if (e.target === $('dlg')) fecharDialogo(); });
+  $('dlg').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fecharDialogo();
+    if (e.key === 'Tab') { const f = [$('dlg-voltar'), $('dlg-ok')]; const i = f.indexOf(document.activeElement); if (e.shiftKey ? i <= 0 : i === f.length - 1) { e.preventDefault(); f[e.shiftKey ? f.length - 1 : 0].focus(); } }
+  });
+  $('b-salvar-config').onclick = () => {
+    lerEmpresa();
+    const z = zapLimpo(rascunho.whatsapp);
+    if (z && (z.length < 12 || z.length > 13)) { toast('WhatsApp inválido. Use DDD + número, ex.: (16) 3701-1414.', true); $('c-zap').focus(); return; }
+    const itens = mudancas(); if (!itens.length) return;
+    abrirDialogo(itens);
+  };
+  $('dlg-ok').onclick = async () => {
+    $('dlg-ok').disabled = true; $('dlg-ok').textContent = 'Salvando…';
+    const dados = { mostrar_preco: rascunho.mostrar_preco, nome_empresa: rascunho.nome_empresa || 'Oligran Distribuidora', whatsapp: zapLimpo(rascunho.whatsapp) };
+    const mudouExibir = C.CAMPOS_EXIBICAO.some((x) => x.k !== 'preco' && visivel(config, x.k) !== visivel(rascunho, x.k));
+    if (mudouExibir || config.exibir) dados.exibir = rascunho.exibir;
+    const { data, error } = await cliente.from('configuracoes').update(dados).eq('id', 1).select().single();
+    $('dlg-ok').disabled = false; $('dlg-ok').textContent = 'Sim, salvar';
     if (error) {
-      el.checked = !valor;
       const m = String(error.message || '');
+      fecharDialogo();
       toast(/exibir/.test(m) && /column|coluna/i.test(m)
         ? 'Falta atualizar o banco: rode o arquivo supabase/atualizacao-2-exibicao.sql no SQL Editor do Supabase.'
         : traduzir(error), true);
       return;
     }
-    config = data; desenharExibicao();
-    toast(`${rotulo}: ${valor ? 'aparece no site' : 'escondido do site'}`);
-  });
-
-  $('b-salvar-empresa').onclick = async () => {
-    const zap = $('c-zap').value.replace(/\D/g, '');
-    const zapFinal = zap ? (zap.length <= 11 ? '55' + zap : zap) : null;
-    if (zap && (zapFinal.length < 12 || zapFinal.length > 13)) { toast('WhatsApp inválido. Use DDD + número.', true); return; }
-    const { data, error } = await cliente.from('configuracoes')
-      .update({ nome_empresa: $('c-nome').value.trim() || 'Oligran Distribuidora', whatsapp: zapFinal }).eq('id', 1).select().single();
-    if (error) return toast(traduzir(error), true);
-    config = data; $('c-zap').value = data.whatsapp || ''; toast('Dados salvos');
+    config = data; fecharDialogo(); abrirConfig();
+    toast('Configurações salvas. O site já está atualizado.');
   };
 
   /* ---------- formulário ---------- */
@@ -470,7 +645,7 @@
     form.reset(); limparErros(); $('erro-form').hidden = true;
     editando = p ? p.id : null;
     const d = p || base || {};
-    $('ta-titulo').textContent = p ? 'Editar pedra' : (base ? 'Novo lote' : 'Nova pedra');
+    titulo(p ? 'Editar pedra' : (base ? 'Novo lote' : 'Nova pedra'));
     $('extra').hidden = !p;
     ['nome', 'codigo', 'lote', 'cor', 'origem', 'observacoes'].forEach((k) => (campo(k).value = d[k] || ''));
     garantirOpcao(campo('tipo'), d.tipo); garantirOpcao(campo('acabamento'), d.acabamento);
@@ -742,7 +917,10 @@
     sujo = false; novasEnviadas = []; mostrar('tela-lista'); desenharLista(); toast('Pedra excluída.');
   };
 
-  window.addEventListener('beforeunload', (e) => { if (!$('tela-form').hidden && (sujo || enviando)) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', (e) => {
+    const pendConfig = !$('tela-config').hidden && rascunho && mudancas().length;
+    if ((!$('tela-form').hidden && (sujo || enviando)) || pendConfig) { e.preventDefault(); e.returnValue = ''; }
+  });
 
   iniciar();
 })();
