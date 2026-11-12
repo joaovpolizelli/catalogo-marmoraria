@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Painel · Catálogo</title>
+<title>Painel · Oligran</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#f6f3ee">
+<meta name="theme-color" content="#16181a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Painel">
-<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-title" content="Painel Oligran">
+<link rel="icon" href="assets/icone-180.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icone-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Advent+Pro:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/estilo.css">
 <style>
   .painel { max-width: 760px; margin: 0 auto; padding: 16px 16px 120px; }
@@ -89,6 +89,8 @@
   .extra { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
   .login { max-width: 400px; margin: 8vh auto 0; padding: 0 16px; }
   .login h1 { font: 600 34px/1.1 var(--serif); margin: 0 0 6px; }
+  .faixa-marca { background: var(--marca-fundo); border-bottom: 3px solid var(--acento); border-radius: var(--raio); padding: 16px; display: flex; justify-content: center; margin-bottom: 20px; }
+  .faixa-marca img { height: 48px; width: auto; }
   .login p { color: var(--texto-2); margin: 0 0 18px; }
   .dica { background: var(--aviso-bg); color: var(--aviso); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 14px; }
   .msg-erro { background: var(--fim-bg); color: var(--fim); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; font-weight: 500; }
@@ -99,6 +101,7 @@
 
 <!-- ============ LOGIN ============ -->
 <section id="tela-login" class="login" hidden>
+  <div class="faixa-marca"><img src="assets/logo-oligran.png" alt="Oligran Distribuidora" width="201" height="56"></div>
   <h1>Painel do catálogo</h1>
   <p>Entre para cadastrar e editar as pedras.</p>
   <div class="dica" id="dica-demo" hidden></div>
@@ -370,7 +373,7 @@
     const zapFinal = zap ? (zap.length <= 11 ? '55' + zap : zap) : null;
     if (zap && (zapFinal.length < 12 || zapFinal.length > 13)) { toast('WhatsApp inválido. Use DDD + número.', true); return; }
     const { data, error } = await cliente.from('configuracoes')
-      .update({ nome_empresa: $('c-nome').value.trim() || 'Catálogo de Mármores', whatsapp: zapFinal }).eq('id', 1).select().single();
+      .update({ nome_empresa: $('c-nome').value.trim() || 'Oligran Distribuidora', whatsapp: zapFinal }).eq('id', 1).select().single();
     if (error) return toast(traduzir(error), true);
     config = data; $('c-zap').value = data.whatsapp || ''; toast('Dados salvos');
   };
@@ -474,7 +477,7 @@
     const id = form.dataset.id;
     for (const arq of arquivos) {
       try {
-        const [g, p] = await Promise.all([C.comprimirImagem(arq, 1600, 0.82), C.comprimirImagem(arq, 480, 0.72)]);
+        const [g, p] = await Promise.all([C.comprimirImagem(arq, 2560, 0.88), C.comprimirImagem(arq, 480, 0.72)]);
         const base = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         const op = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
         const r1 = await cliente.storage.from('fotos').upload(base + '.jpg', g, op);

@@ -3,24 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Catálogo de Mármores</title>
-<meta name="description" content="Catálogo de mármores, granitos e pedras naturais.">
-<meta name="theme-color" content="#f6f3ee">
+<title>Oligran · Catálogo de Pedras</title>
+<meta name="description" content="Oligran Distribuidora — catálogo de granitos, mármores e quartzos.">
+<meta name="theme-color" content="#16181a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Catálogo">
-<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-title" content="Oligran">
+<link rel="icon" href="assets/icone-180.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icone-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Advent+Pro:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/estilo.css">
 </head>
 <body>
 <header class="topo">
   <div class="topo-interno">
     <div class="marca">
-      <h1 id="empresa">Catálogo de Mármores</h1>
-      <small id="total"></small>
+      <h1 class="oculto-leitor" id="empresa">Oligran Distribuidora</h1>
+      <img class="logo" src="assets/logo-oligran.png" alt="Oligran Distribuidora" width="201" height="56">
+      <div class="titulo"><b>Catálogo</b><small id="total"></small></div>
     </div>
     <label class="busca">
       <span class="oculto-leitor">Buscar</span>
@@ -82,7 +83,7 @@
         _fotos: C.normalizarFotos(p.fotos),
         _busca: C.semAcento([p.nome, p.codigo, p.lote, p.cor, p.tipo, p.origem, p.acabamento].join(' '))
       }));
-      if (config.nome_empresa) { $('empresa').textContent = config.nome_empresa; document.title = config.nome_empresa + ' · Catálogo'; }
+      if (config.nome_empresa && config.nome_empresa !== 'Catálogo de Mármores') { $('empresa').textContent = config.nome_empresa; document.title = config.nome_empresa + ' · Catálogo'; }
       montarFiltros();
       desenhar();
       abrirPeloEndereco();
@@ -194,6 +195,7 @@
       <button class="fechar" type="button" id="fechar" aria-label="Fechar">×</button>
       <div class="galeria" id="galeria"></div>
       <div class="miniaturas" id="minis"></div>
+      <div class="salvar" id="salvar"></div>
       <div class="detalhe">
         ${C.badgeStatus(p.status)}
         <h2 id="d-nome">${C.esc(p.nome)}</h2>
@@ -208,6 +210,7 @@
         </div>
       </div>`;
     desenharFoto();
+    prepararFotos(p);
     $('modal').hidden = false; document.body.style.overflow = 'hidden';
     $('folha').scrollTop = 0;
     $('fechar').focus();
@@ -225,12 +228,53 @@
   function desenharFoto() {
     const fs = atual._fotos;
     const g = $('galeria');
-    if (!fs.length) { g.innerHTML = '<div class="sem-foto" style="color:#bbb">Sem foto</div>'; $('minis').hidden = true; return; }
+    if (!fs.length) { g.innerHTML = '<div class="sem-foto" style="color:#bbb">Sem foto</div>'; $('minis').hidden = true; $('salvar').hidden = true; return; }
+    const icone = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>';
+    $('salvar').hidden = false;
+    $('salvar').innerHTML = `<button class="botao primario" type="button" data-salvar="uma">${icone}Salvar esta foto</button>` +
+      (fs.length > 1 ? `<button class="botao" type="button" data-salvar="todas">${icone}Todas (${fs.length})</button>` : '');
     g.innerHTML = `<img src="${C.esc(C.urlFoto(cliente, fs[fotoIdx].g))}" alt="${C.esc(atual.nome)} — foto ${fotoIdx + 1}">` +
       (fs.length > 1 ? `<button class="seta esq" type="button" aria-label="Foto anterior">‹</button><button class="seta dir" type="button" aria-label="Próxima foto">›</button><span class="pos">${fotoIdx + 1}/${fs.length}</span>` : '');
     $('minis').hidden = fs.length < 2;
     $('minis').innerHTML = fs.map((f, i) => `<button type="button" data-i="${i}" aria-current="${i === fotoIdx}" aria-label="Foto ${i + 1}"><img src="${C.esc(C.urlFoto(cliente, f.p))}" alt=""></button>`).join('');
   }
+  /* ---------- salvar fotos no celular ---------- */
+  const baixadas = {};
+  function prebaixar(url) {
+    if (!baixadas[url]) {
+      baixadas[url] = fetch(url, { mode: 'cors' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); });
+      baixadas[url].catch(() => { delete baixadas[url]; });
+    }
+    return baixadas[url];
+  }
+  function prepararFotos(p) { p._fotos.forEach((f) => prebaixar(C.urlFoto(cliente, f.g)).catch(() => {})); }
+  function nomeArquivo(p, i, tipo) {
+    const ext = /png/.test(tipo) ? 'png' : /svg/.test(tipo) ? 'svg' : /webp/.test(tipo) ? 'webp' : 'jpg';
+    const base = C.semAcento([p.nome, p.codigo, p.lote].filter(Boolean).join('-')).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return `${base || 'pedra'}-${i + 1}.${ext}`;
+  }
+  async function salvarFotos(indices, botao) {
+    const p = atual; if (!p) return;
+    const rotulo = botao.innerHTML; botao.disabled = true;
+    try {
+      const blobs = await Promise.all(indices.map((i) => prebaixar(C.urlFoto(cliente, p._fotos[i].g))));
+      const files = blobs.map((b, k) => new File([b], nomeArquivo(p, indices[k], b.type), { type: b.type || 'image/jpeg' }));
+      if (navigator.canShare && navigator.share && navigator.canShare({ files })) {
+        await navigator.share({ files });
+        return;
+      }
+      for (const f of files) {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      }
+      toast(files.length > 1 ? `${files.length} fotos baixadas` : 'Foto baixada');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      if (e && e.name === 'NotAllowedError') { toast('Fotos prontas. Toque de novo para salvar.'); return; }
+      console.error(e); toast('Não consegui salvar. Segure o dedo sobre a foto e escolha “Salvar na Fotos”.', true);
+    } finally { botao.disabled = false; botao.innerHTML = rotulo; }
+  }
+
   function mudarFoto(d) { const n = atual._fotos.length; if (n < 2) return; fotoIdx = (fotoIdx + d + n) % n; desenharFoto(); }
 
   function fechar(voltar) {
@@ -248,10 +292,10 @@
   }
 
   let toastT;
-  function toast(t) {
+  function toast(t, ehErro) {
     let el = document.querySelector('.toast');
     if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-    el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), 2200);
+    el.textContent = t; el.classList.toggle('erro', !!ehErro); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), ehErro ? 4500 : 2600);
   }
 
   /* ---------- eventos ---------- */
@@ -270,6 +314,8 @@
     if (e.target.closest('.seta.esq')) mudarFoto(-1);
     else if (e.target.closest('.seta.dir')) mudarFoto(1);
     const mb = e.target.closest('#minis button'); if (mb) { fotoIdx = Number(mb.dataset.i); desenharFoto(); }
+    const sb = e.target.closest('[data-salvar]');
+    if (sb && atual) salvarFotos(sb.dataset.salvar === 'todas' ? atual._fotos.map((_, i) => i) : [fotoIdx], sb);
   });
   let x0 = null;
   $('modal').addEventListener('touchstart', (e) => { if (e.target.closest('#galeria')) x0 = e.touches[0].clientX; }, { passive: true });
