@@ -289,7 +289,7 @@
     let semSituacao = !!opcoes.semSituacao;
     const aoMudar = opcoes.aoMudar || (() => {});
     const padrao = () => ({ busca: '', tipo: '', cor: '', acabamento: '', espessura: '', aplicacao: '', origem: '',
-      precoMin: '', precoMax: '', areaMin: '', status: modo === 'publico' ? 'ativos' : '', publicado: '', semFoto: false, comVideo: false });
+      precoMin: '', precoMax: '', areaMin: '', status: modo === 'publico' ? 'ativos' : '', publicado: '', semFoto: false, comVideo: false, incluirSemPreco: true });
     let estado = padrao(), produtos = [];
 
     const uniq = (vals) => [...new Set(vals.filter((v) => v != null && v !== ''))].sort((a, b) =>
@@ -309,9 +309,14 @@
       if (e.aplicacao && !(p.aplicacoes || []).includes(e.aplicacao)) return false;
       if (e.origem && grupoOrigem(p.origem) !== e.origem) return false;
       const pmin = lerNumero(e.precoMin), pmax = lerNumero(e.precoMax);
-      if ((pmin > 0 || pmax > 0) && p.preco_m2 == null) return false;
-      if (pmin > 0 && Number(p.preco_m2) < pmin) return false;
-      if (pmax > 0 && Number(p.preco_m2) > pmax) return false;
+      if (pmin > 0 || pmax > 0) {
+        // pedra sem preço (sob consulta) não tem como comparar: entra ou não conforme a opção
+        if (p.preco_m2 == null || p.preco_m2 === '') { if (!e.incluirSemPreco) return false; }
+        else {
+          if (pmin > 0 && Number(p.preco_m2) < pmin) return false;
+          if (pmax > 0 && Number(p.preco_m2) > pmax) return false;
+        }
+      }
       const amin = lerNumero(e.areaMin);
       if (amin > 0 && !(totalM2(p) >= amin)) return false;
       if (e.status === 'ativos' && p.status === 'esgotado') return false;
@@ -354,6 +359,7 @@
 
     function montar() {
       const temPreco = produtos.some((p) => p.preco_m2 != null);
+      const semPreco = produtos.filter((p) => p.preco_m2 == null || p.preco_m2 === '').length;
       const temArea = produtos.some((p) => totalM2(p) > 0);
       const statusPublico = `<label class="campo"><span>Disponibilidade</span><select id="flt-status">
           <option value="ativos">Ocultar esgotados</option><option value="disponivel">Só disponíveis</option>
@@ -375,7 +381,8 @@
           <div class="faixa-campos">
             <label class="campo"><span>Mínimo</span><span class="com-prefixo"><i aria-hidden="true">R$</i><input id="flt-preco-min" type="text" inputmode="decimal" placeholder="0,00" aria-label="Preço mínimo por m², em reais"></span></label>
             <label class="campo"><span>Máximo</span><span class="com-prefixo"><i aria-hidden="true">R$</i><input id="flt-preco-max" type="text" inputmode="decimal" placeholder="sem limite" aria-label="Preço máximo por m², em reais"></span></label>
-          </div><small class="ajuda-faixa">Preencha só um dos dois se quiser. Ex.: máximo 500 mostra pedras de até R$ 500/m².</small></fieldset>` : ''}
+          </div><small class="ajuda-faixa">Preencha só um dos dois se quiser. Ex.: máximo 500 mostra pedras de até R$ 500/m².</small>
+          ${semPreco ? `<label class="marcar"><input type="checkbox" id="flt-sem-preco"> ${semPreco === 1 ? 'Incluir a pedra sem preço (sob consulta)' : `Incluir as ${semPreco} pedras sem preço (sob consulta)`}</label>` : ''}</fieldset>` : ''}
         ${temArea ? `<label class="campo"><span>Estoque mínimo do lote (m²)</span><input id="flt-area-min" type="text" inputmode="decimal" placeholder="Ex.: 20"><small>Mostra só lotes com pelo menos essa metragem.</small></label>` : ''}
         <div class="filtros-grade">${modo === 'admin' ? statusAdmin : (semSituacao ? '' : statusPublico)}</div>
         <label class="marcar"><input type="checkbox" id="flt-video"> Só pedras com vídeo</label>
@@ -394,12 +401,14 @@
       }
       if (el('flt-video')) el('flt-video').checked = estado.comVideo;
       if (el('flt-sem-foto')) el('flt-sem-foto').checked = estado.semFoto;
+      if (el('flt-sem-preco')) el('flt-sem-preco').checked = estado.incluirSemPreco;
     }
     function lerDaTela() {
       const e = Object.assign({}, estado);
       for (const [k, id] of Object.entries(campos)) { const x = el(id); e[k] = x ? x.value : padrao()[k]; }
       e.comVideo = !!(el('flt-video') && el('flt-video').checked);
       e.semFoto = !!(el('flt-sem-foto') && el('flt-sem-foto').checked);
+      e.incluirSemPreco = el('flt-sem-preco') ? el('flt-sem-preco').checked : true;
       return e;
     }
     function atualizarBotaoVer() {
@@ -421,7 +430,7 @@
     function quantidadeAtivos() {
       const p = padrao();
       return ['tipo', 'cor', 'acabamento', 'espessura', 'aplicacao', 'origem', 'areaMin', 'status', 'publicado', 'semFoto', 'comVideo']
-        .filter((k) => String(estado[k]) !== String(p[k])).length + ((estado.precoMin || estado.precoMax) ? 1 : 0);
+        .filter((k) => String(estado[k]) !== String(p[k])).length + ((estado.precoMin || estado.precoMax) ? 1 : 0);  // incluirSemPreco só vale junto com a faixa
     }
 
     return {
